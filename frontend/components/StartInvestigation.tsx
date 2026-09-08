@@ -195,6 +195,7 @@ export default function StartInvestigation() {
       try {
         const eco = await runEcologicalAssessment({
           forecast_trajectory: res.forecast.trajectory,
+          spill_id: analysisResult.spill_id, // persists onto the live record for the dashboard
         });
         setEcologyResult(eco);
       } catch {
@@ -1097,13 +1098,23 @@ export default function StartInvestigation() {
                   ← Upload Another SAR Scene
                 </button>
 
-                <Link
-                  href="/dashboard"
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
-                >
-                  <span>OPEN FULL DEMO CASE (SPILL-001)</span>
-                  <span>→</span>
-                </Link>
+                {driftResult && aisResult ? (
+                  <Link
+                    href={`/dashboard?case=${encodeURIComponent(analysisResult.spill_id)}`}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                  >
+                    <span>👉 VIEW LIVE INVESTIGATION IN 7-STEP DASHBOARD</span>
+                    <span>→</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                  >
+                    <span>OPEN FULL DEMO CASE (SPILL-001)</span>
+                    <span>→</span>
+                  </Link>
+                )}
               </div>
             </div>
           ) : (

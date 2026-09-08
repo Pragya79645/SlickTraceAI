@@ -345,6 +345,7 @@ class EcologicalAssessment(BaseModel):
 class EcologyRequest(BaseModel):
     forecast_trajectory: List[GeoTimestep]
     habitats: Optional[List[SensitiveHabitat]] = None
+    spill_id: Optional[str] = None     # a live SPILL-LIVE-… id persists the result onto that record
 
 
 # ─── National Ramsar GIS Spatial Exposure Engine (Phase 5E Part 3) ────────────
@@ -383,6 +384,7 @@ class EcologicalExposureResponse(BaseModel):
 
 class EcologicalExposureRequest(BaseModel):
     forecast_trajectory: List[GeoTimestep]
+    spill_id: Optional[str] = None     # a live SPILL-LIVE-… id persists the result onto that record
 
 
 # ─── Unified Investigation Response ──────────────────────────────────────────
@@ -399,6 +401,13 @@ class InvestigationResponse(BaseModel):
     ais_summary: AISSummary
     ecology: Optional[EcologicalAssessment] = None
     ecological_exposure: Optional[EcologicalExposureResponse] = None
+
+    # Set when the case is a live upload (SPILL-LIVE-…) rather than a bundled scenario
+    is_live: bool = False
+    filename: Optional[str] = None
+    anchor_source: Optional[str] = None       # "geotiff" | "manual"
+    georeference: Optional[SceneGeoreference] = None
+    overlay_image: Optional[str] = None       # mask overlay JPEG data URL from the analysis
 
 
 # ─── Live Inference & Investigation Workflow Schema (Phase 4 Step 5C) ────────

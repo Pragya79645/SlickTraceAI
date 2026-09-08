@@ -313,6 +313,7 @@ export interface EcologicalAssessment {
 export interface EcologyRequest {
   forecast_trajectory: GeoTimestep[];
   habitats?: SensitiveHabitat[];
+  spill_id?: string; // a live SPILL-LIVE-… id persists the result onto that record
 }
 
 // ── National Ramsar GIS Spatial Exposure Layer (Phase 5E Part 3) ─────────────
@@ -359,7 +360,17 @@ export interface InvestigationResponse {
   ais_summary: AISSummary;
   ecology?: EcologicalAssessment;
   ecological_exposure?: EcologicalExposureResponse;
+
+  // Set when the case is a live upload (SPILL-LIVE-…) rather than a bundled scenario
+  is_live?: boolean;
+  filename?: string | null;
+  anchor_source?: "geotiff" | "manual" | "none" | null;
+  georeference?: SceneGeoreference | null;
+  overlay_image?: string | null;
 }
+
+export const LIVE_CASE_PREFIX = "SPILL-LIVE-";
+export const isLiveCaseId = (id?: string | null) => !!id && id.startsWith(LIVE_CASE_PREFIX);
 
 // ── Live Inference Response ──────────────────────────────────────────────────
 
@@ -466,7 +477,7 @@ export interface DemoCase {
   id: string;
   label: string; // short button label
   headline: string; // what the scenario demonstrates
-  accent: "amber" | "indigo" | "red";
+  accent: "amber" | "indigo" | "red" | "emerald";
 }
 
 export const DEMO_CASES: DemoCase[] = [
@@ -490,9 +501,23 @@ export const DEMO_CASES: DemoCase[] = [
   },
 ];
 
-export function nextDemoCase(currentId: string): DemoCase {
-  const idx = DEMO_CASES.findIndex((c) => c.id === currentId);
-  return DEMO_CASES[(idx + 1) % DEMO_CASES.length];
+/** The switchable case list: an optional live upload first, then the bundled scenarios. */
+export function buildCaseList(liveCaseId?: string | null, liveFilename?: string | null): DemoCase[] {
+  if (!isLiveCaseId(liveCaseId)) return DEMO_CASES;
+  return [
+    {
+      id: liveCaseId as string,
+      label: "LIVE CASE",
+      headline: `Your live upload${liveFilename ? ` — ${liveFilename}` : ""}`,
+      accent: "emerald",
+    },
+    ...DEMO_CASES,
+  ];
+}
+
+export function nextDemoCase(currentId: string, cases: DemoCase[] = DEMO_CASES): DemoCase {
+  const idx = cases.findIndex((c) => c.id === currentId);
+  return cases[(idx + 1) % cases.length];
 }
 
 // ── Fetchers ──────────────────────────────────────────────────────────────────

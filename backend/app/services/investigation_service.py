@@ -122,13 +122,90 @@ SCENARIOS: Dict[str, Dict[str, Any]] = {
 KNOWN_IDS = frozenset(SCENARIOS)
 
 
+# ─── Live uploads as first-class cases ────────────────────────────────────────
+
+def _live_investigation(spill_id: str) -> InvestigationResponse:
+    """
+    Assembles a unified investigation from a persisted live upload (SPILL-LIVE-…).
+    Drift must already exist (the scene was anchored, or Phase 2 was run); attribution and
+    the ecological layers are computed here if the step-wise flow never produced them, and
+    written back so the record is complete for later visits.
+    """
+    from app.services.ais_service import correlate_vessels
+    from app.services.ecological_service import assess_trajectory_exposure
+    from app.services.ecology_service import assess_ecological_threat
+    from app.services.inference_service import attach_live_results, get_live_investigation
+
+    rec = get_live_investigation(spill_id)
+    if rec is None:
+        raise ValueError(
+            f"Unknown spill_id: {spill_id!r}. Known scenarios: {', '.join(sorted(KNOWN_IDS))}, "
+            "or a persisted live investigation id (SPILL-LIVE-…)"
+        )
+    if rec.detection is None:
+        raise ValueError(f"Live investigation {spill_id} detected no slick, so there is nothing to reconstruct")
+    if rec.drift is None:
+        raise ValueError(
+            f"Live investigation {spill_id} has no drift reconstruction yet — run Phase 2 "
+            "(enter the scene anchor) or upload a georeferenced GeoTIFF first"
+        )
+
+    drift = rec.drift
+    origin = drift.hindcast.estimated_origin
+    updates: Dict[str, Any] = {}
+
+    attribution = rec.attribution
+    if attribution is None:
+        attribution = correlate_vessels(
+            spill_id=spill_id,
+            origin_lat=origin.lat,
+            origin_lon=origin.lon,
+            origin_timestamp=origin.timestamp,
+            origin_ellipses=drift.ensemble.hindcast_steps[-1].ellipses if drift.ensemble else None,
+        )
+        updates["attribution"] = attribution
+
+    ecology = rec.ecology
+    if ecology is None:
+        ecology = assess_ecological_threat(drift.forecast.trajectory)
+        updates["ecology"] = ecology
+
+    exposure = rec.ecological_exposure
+    if exposure is None:
+        exposure = assess_trajectory_exposure(drift.forecast.trajectory)
+        updates["ecological_exposure"] = exposure
+
+    if updates:
+        attach_live_results(spill_id, **updates)
+
+    return InvestigationResponse(
+        spill_id=spill_id,
+        detection=rec.detection,
+        drift=drift,
+        attribution=attribution,
+        ais_summary=_load_ais_summary(_AIS_FILE_001),   # live correlation runs against the bundled AIS dataset
+        ecology=ecology,
+        ecological_exposure=exposure,
+        is_live=True,
+        filename=rec.filename,
+        anchor_source=rec.anchor_source,
+        georeference=rec.georeference,
+        overlay_image=rec.overlay_image,
+    )
+
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 def get_investigation(spill_id: str) -> InvestigationResponse:
     """
-    Return the unified investigation object for *spill_id*.
-    Raises ValueError for unknown IDs.
+    Return the unified investigation object for *spill_id* — a bundled scenario or a
+    persisted live upload (SPILL-LIVE-…). Raises ValueError for unknown IDs.
     """
+    from app.services.inference_service import is_live_id
+
+    if is_live_id(spill_id):
+        return _live_investigation(spill_id)
+
     scenario = SCENARIOS.get(spill_id)
     if scenario is None:
         raise ValueError(

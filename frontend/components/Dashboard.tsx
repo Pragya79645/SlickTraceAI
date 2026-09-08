@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import {
   fetchInvestigation,
-  DEMO_CASES,
+  buildCaseList,
   type InvestigationResponse,
   type CandidateVessel,
 } from "@/lib/api";
@@ -30,10 +30,16 @@ const RISK_BADGE: Record<string, string> = {
 
 interface Props {
   data: InvestigationResponse;
+  liveCaseId?: string; // a live upload that stays switchable alongside the bundled scenarios
+  notice?: string;
 }
 
-export default function Dashboard({ data: initialData }: Props) {
+export default function Dashboard({ data: initialData, liveCaseId, notice }: Props) {
   const [data, setData] = useState<InvestigationResponse>(initialData);
+  const cases = useMemo(
+    () => buildCaseList(liveCaseId, initialData.is_live ? initialData.filename : undefined),
+    [liveCaseId, initialData.is_live, initialData.filename]
+  );
   const [viewMode, setViewMode] = useState<"story" | "console">("story");
   const [isLoadingCase, setIsLoadingCase] = useState(false);
   const [caseError, setCaseError] = useState<string | null>(null);
@@ -102,8 +108,8 @@ export default function Dashboard({ data: initialData }: Props) {
   const topCandidate = attribution.candidate_vessels[0];
   const topCandidateName = topCandidate?.vessel_name || "N/A";
   const isTopCandidate = selectedVessel.vessel_id === topCandidate?.vessel_id;
-  const isValidationScenario = data.spill_id !== "SPILL-001";
-  const activeCase = DEMO_CASES.find((c) => c.id === data.spill_id);
+  const isValidationScenario = data.spill_id !== "SPILL-001" && !data.is_live;
+  const activeCase = cases.find((c) => c.id === data.spill_id);
 
   const handleSwitchCase = async (caseId: string) => {
     if (caseId === data.spill_id || isLoadingCase) return;
@@ -175,9 +181,9 @@ export default function Dashboard({ data: initialData }: Props) {
 
             {/* Scenario Selector */}
             <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-mono">
-              {DEMO_CASES.map((c) => {
+              {cases.map((c) => {
                 const active = data.spill_id === c.id;
-                const accent = { amber: "text-amber-400", indigo: "text-indigo-300", red: "text-red-300" }[c.accent];
+                const accent = { amber: "text-amber-400", indigo: "text-indigo-300", red: "text-red-300", emerald: "text-emerald-300" }[c.accent];
                 return (
                   <button
                     key={c.id}
@@ -216,6 +222,8 @@ export default function Dashboard({ data: initialData }: Props) {
       {viewMode === "story" ? (
         <InvestigationStoryMode
           data={data}
+          cases={cases}
+          notice={notice}
           onSwitchCase={handleSwitchCase}
           onOpenConsole={() => setViewMode("console")}
         />
@@ -227,12 +235,14 @@ export default function Dashboard({ data: initialData }: Props) {
             <div className="flex items-center gap-2">
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                  isValidationScenario
+                  data.is_live
+                    ? "bg-emerald-950 text-emerald-300 border border-emerald-700"
+                    : isValidationScenario
                     ? "bg-indigo-950 text-indigo-300 border border-indigo-700"
                     : "bg-amber-950 text-amber-300 border border-amber-700"
                 }`}
               >
-                {isValidationScenario ? "CONTROLLED VALIDATION SCENARIO" : "REFERENCE BASELINE CASE"}
+                {data.is_live ? "● LIVE INVESTIGATION" : isValidationScenario ? "CONTROLLED VALIDATION SCENARIO" : "REFERENCE BASELINE CASE"}
               </span>
               <span className="text-slate-300">
                 Active Case: <strong className="text-white">{data.spill_id}</strong> · Top Lead:{" "}

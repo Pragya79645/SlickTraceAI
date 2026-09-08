@@ -1,27 +1,54 @@
 /**
  * /dashboard — Server Component
  *
- * Fetches the SPILL-001 investigation from the FastAPI backend
- * and passes real data to the client-side Dashboard component.
+ * Fetches an investigation from the FastAPI backend and hands it to the client-side
+ * Dashboard. `?case=<id>` selects the case: a bundled scenario (SPILL-001 default,
+ * SPILL-TEST-002, SPILL-TEST-003) or a persisted live upload (SPILL-LIVE-…).
  *
  * All displayed values come from the API response — nothing is hardcoded.
  */
 
 import type { Metadata } from "next";
-import { fetchInvestigation } from "@/lib/api";
+import { fetchInvestigation, isLiveCaseId, type InvestigationResponse } from "@/lib/api";
 import Dashboard from "@/components/Dashboard";
 
+const DEFAULT_CASE = "SPILL-001";
+
 export const metadata: Metadata = {
-  title: "SPILL-001 | SlickTrace AI",
+  title: "Investigation | SlickTrace AI",
   description:
-    "Oil spill investigation dashboard — detection, drift reconstruction, and vessel attribution for SPILL-001",
+    "Oil spill investigation dashboard — detection, drift reconstruction, vessel attribution and ecological exposure",
 };
 
-export default async function DashboardPage() {
-  let data;
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const raw = Array.isArray(params.case) ? params.case[0] : params.case;
+  const requested = (raw ?? "").trim() || DEFAULT_CASE;
+
+  let data: InvestigationResponse | undefined;
+  let notice: string | undefined;
+  let lastError: unknown;
+
   try {
-    data = await fetchInvestigation("SPILL-001");
+    data = await fetchInvestigation(requested);
   } catch (err) {
+    lastError = err;
+    if (requested !== DEFAULT_CASE) {
+      // A missing/incomplete live case shouldn't strand the user — fall back to the baseline
+      try {
+        data = await fetchInvestigation(DEFAULT_CASE);
+        notice = `Case "${requested}" could not be loaded (${String(err instanceof Error ? err.message : err)}). Showing ${DEFAULT_CASE} instead.`;
+      } catch (err2) {
+        lastError = err2;
+      }
+    }
+  }
+
+  if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-slate-950 text-slate-300 gap-4">
         <div className="text-4xl">⚠</div>
@@ -35,10 +62,16 @@ export default async function DashboardPage() {
           cd backend{"\n"}
           slicktrace-env\Scripts\uvicorn app.main:app --port 8000 --reload
         </pre>
-        <p className="text-xs text-slate-600 mt-2">{String(err)}</p>
+        <p className="text-xs text-slate-600 mt-2">{String(lastError)}</p>
       </div>
     );
   }
 
-  return <Dashboard data={data} />;
+  return (
+    <Dashboard
+      data={data}
+      liveCaseId={isLiveCaseId(data.spill_id) ? data.spill_id : undefined}
+      notice={notice}
+    />
+  );
 }

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import type { InvestigationResponse, CandidateVessel } from "@/lib/api";
-import { nextDemoCase } from "@/lib/api";
+import type { InvestigationResponse, CandidateVessel, DemoCase } from "@/lib/api";
+import { DEMO_CASES, nextDemoCase } from "@/lib/api";
 import ModelMetricsPanel from "@/components/ModelMetricsPanel";
 import DossierButton from "@/components/DossierButton";
 
@@ -24,6 +24,8 @@ const RISK_BADGE: Record<string, string> = {
 
 interface Props {
   data: InvestigationResponse;
+  cases?: DemoCase[]; // switchable cases (live upload first when present)
+  notice?: string;
   onSwitchCase: (caseId: string) => void;
   onOpenConsole: () => void;
 }
@@ -40,6 +42,8 @@ const STAGES = [
 
 export default function InvestigationStoryMode({
   data,
+  cases = DEMO_CASES,
+  notice,
   onSwitchCase,
   onOpenConsole,
 }: Props) {
@@ -51,7 +55,8 @@ export default function InvestigationStoryMode({
 
   const { detection, drift, attribution, ecology } = data;
   const topCandidate = attribution.candidate_vessels[0];
-  const nextCase = nextDemoCase(data.spill_id);
+  const nextCase = nextDemoCase(data.spill_id, cases);
+  const activeCase = cases.find((c) => c.id === data.spill_id);
 
   // Effective selected vessel
   const effectiveVesselId = selectedVesselId || topCandidate?.vessel_id || null;
@@ -155,12 +160,32 @@ export default function InvestigationStoryMode({
                   amber: "bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border-amber-700",
                   indigo: "bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border-indigo-700",
                   red: "bg-red-950/60 hover:bg-red-900/80 text-red-300 border-red-700",
+                  emerald: "bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border-emerald-700",
                 }[nextCase.accent]
               }`}
             >
               <span>⚡</span>
               <span>Next: {nextCase.label}</span>
             </button>
+            {cases.length > 1 && (
+              <div className="hidden md:flex items-center gap-1 text-[10px] font-mono">
+                {cases.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => onSwitchCase(c.id)}
+                    title={c.headline}
+                    className={`px-2 py-1 rounded border cursor-pointer transition-colors ${
+                      c.id === data.spill_id
+                        ? { amber: "text-amber-300 border-amber-700 bg-amber-950/50", indigo: "text-indigo-300 border-indigo-700 bg-indigo-950/50", red: "text-red-300 border-red-700 bg-red-950/50", emerald: "text-emerald-300 border-emerald-700 bg-emerald-950/50" }[c.accent]
+                        : "text-slate-500 border-slate-800 hover:text-slate-300"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <DossierButton data={data} />
             <button
@@ -232,19 +257,38 @@ export default function InvestigationStoryMode({
                   <span className="px-2.5 py-1 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                     STAGE 01 OF 07
                   </span>
-                  <span className="text-xs font-mono text-slate-400">
-                    Sentinel-1 SAR Satellite Pass
+                  <span className={`text-xs font-mono ${data.is_live ? "text-emerald-300 font-bold" : "text-slate-400"}`}>
+                    {data.is_live ? `● LIVE UPLOAD · ${data.filename ?? data.spill_id}` : "Sentinel-1 SAR Satellite Pass"}
                   </span>
                 </div>
+
+                {notice && (
+                  <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-800/60 text-[11px] text-amber-200 font-mono">
+                    {notice}
+                  </div>
+                )}
 
                 <div>
                   <h3 className="text-2xl font-black text-white font-mono">
                     DETECT UNKNOWN SLICK
                   </h3>
                   <p className="text-sm text-slate-300 mt-1.5 leading-relaxed">
-                    <strong className="text-amber-400">Before SlickTrace:</strong> This is just an unidentified dark patch on a Sentinel-1 radar scene with no ship visible in the frame.
+                    <strong className="text-amber-400">Before SlickTrace:</strong>{" "}
+                    {data.is_live
+                      ? `Your uploaded scene${data.anchor_source === "geotiff" ? ", auto-georeferenced from its GeoTIFF metadata" : ""} — an unidentified dark patch with no ship visible in the frame.`
+                      : "This is just an unidentified dark patch on a Sentinel-1 radar scene with no ship visible in the frame."}
                   </p>
                 </div>
+
+                {data.overlay_image && (
+                  <div className="rounded-xl overflow-hidden border border-slate-800 bg-black">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.overlay_image} alt="Detected slick mask on the uploaded scene" className="w-full max-h-72 object-contain" />
+                    <div className="px-3 py-1.5 text-[10px] font-mono text-slate-500 border-t border-slate-800">
+                      Segmentation mask painted on your scene{activeCase ? ` · ${activeCase.headline}` : ""}
+                    </div>
+                  </div>
+                )}
 
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
                   <div className="text-[10px] font-bold text-slate-500 uppercase font-mono tracking-wider">

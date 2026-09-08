@@ -111,8 +111,9 @@ def _persist_live_investigation(record: AnalysisResponse) -> None:
                 data = {}
 
         data.pop(record.spill_id, None)          # re-insert so it counts as newest
-        # Preview JPEGs are transient UI payload — never persist them
-        data[record.spill_id] = record.model_dump(exclude={"preview_image", "overlay_image"})
+        # The raw preview is transient UI payload; the mask overlay is kept so a live case
+        # can show its own detection in the story dashboard.
+        data[record.spill_id] = record.model_dump(exclude={"preview_image"})
 
         while len(data) > MAX_LIVE_RECORDS:
             oldest = next(iter(data))
@@ -123,6 +124,47 @@ def _persist_live_investigation(record: AnalysisResponse) -> None:
             json.dump(data, f, indent=2)
     except Exception as exc:
         print(f"Warning: could not persist live investigation to disk: {exc}")
+
+
+LIVE_PREFIX = "SPILL-LIVE-"
+
+
+def is_live_id(spill_id: Optional[str]) -> bool:
+    return bool(spill_id) and str(spill_id).startswith(LIVE_PREFIX)
+
+
+def attach_live_results(spill_id: str, **fields: Any) -> Optional[AnalysisResponse]:
+    """
+    Merges downstream results (drift, attribution, ecology, ecological_exposure) that were
+    produced by the step-wise endpoints onto the persisted live record, and rebuilds the
+    stage statuses so the record stays truthful. Returns None for unknown ids.
+    """
+    rec = get_live_investigation(spill_id)
+    if rec is None:
+        return None
+
+    updates = {k: v for k, v in fields.items() if v is not None}
+    if not updates:
+        return rec
+    merged = rec.model_copy(update=updates)
+
+    stages = _build_stages(
+        detections=merged.all_detections,
+        primary_detection=merged.detection,
+        drift=merged.drift,
+        attribution=merged.attribution,
+        chain_error=merged.chain_error,
+    )
+    merged = merged.model_copy(
+        update={
+            "stages": stages,
+            "has_drift_and_attribution": merged.drift is not None and merged.attribution is not None,
+            "phase2_status": "complete" if merged.drift is not None else merged.phase2_status,
+            "phase3_status": "complete" if merged.attribution is not None else merged.phase3_status,
+        }
+    )
+    _persist_live_investigation(merged)
+    return merged
 
 
 def get_live_investigation(spill_id: str) -> Optional[AnalysisResponse]:

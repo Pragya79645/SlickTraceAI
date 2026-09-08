@@ -18,7 +18,7 @@ from app.schemas.investigation import (
 from app.services.ais_service import correlate_vessels
 from app.services.drift_service import compute_drift
 from app.services.ecology_service import assess_ecological_threat
-from app.services.inference_service import run_sar_inference
+from app.services.inference_service import attach_live_results, is_live_id, run_sar_inference
 from app.services.investigation_service import get_investigation
 
 router = APIRouter(prefix="/api/investigations", tags=["investigations"])
@@ -117,13 +117,16 @@ def compute_drift_endpoint(req: DriftRequest) -> DriftAnalysis:
     Resolves ocean surface current and wind vectors via environment_service.
     """
     try:
-        return compute_drift(
+        result = compute_drift(
             spill_id=req.spill_id,
             latitude=req.latitude,
             longitude=req.longitude,
             timestamp=req.timestamp,
             coordinate_source=req.coordinate_source or "scene_georeference_anchor",
         )
+        if is_live_id(req.spill_id):
+            attach_live_results(req.spill_id, drift=result)
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
@@ -145,7 +148,7 @@ def correlate_ais_endpoint(req: AISCorrelationRequest) -> VesselAttribution:
     Returns ranked candidate vessels with explainable evidence.
     """
     try:
-        return correlate_vessels(
+        result = correlate_vessels(
             spill_id=req.spill_id,
             origin_lat=req.origin.latitude,
             origin_lon=req.origin.longitude,
@@ -154,6 +157,9 @@ def correlate_ais_endpoint(req: AISCorrelationRequest) -> VesselAttribution:
             max_time_window_hours=req.max_time_window_hours or 6.0,
             origin_ellipses=req.origin_ellipses,
         )
+        if is_live_id(req.spill_id):
+            attach_live_results(req.spill_id, attribution=result)
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -176,10 +182,13 @@ def assess_ecology_endpoint(req: EcologyRequest) -> EcologicalAssessment:
     Calculates geodesic distance, time to first impact, threat classification, and response priority.
     """
     try:
-        return assess_ecological_threat(
+        result = assess_ecological_threat(
             forecast_trajectory=req.forecast_trajectory,
             habitats=req.habitats,
         )
+        if is_live_id(req.spill_id):
+            attach_live_results(req.spill_id, ecology=result)
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -204,7 +213,10 @@ def assess_ecological_exposure_endpoint(req: EcologicalExposureRequest) -> Ecolo
     from app.services.ecological_service import assess_trajectory_exposure
 
     try:
-        return assess_trajectory_exposure(req.forecast_trajectory)
+        result = assess_trajectory_exposure(req.forecast_trajectory)
+        if is_live_id(req.spill_id):
+            attach_live_results(req.spill_id, ecological_exposure=result)
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except FileNotFoundError as exc:
@@ -274,9 +286,11 @@ def get_live_investigation_endpoint(spill_id: str) -> AnalysisResponse:
 )
 def get_investigation_endpoint(spill_id: str) -> InvestigationResponse:
     """
-    Returns the combined Phase 1–3 investigation for the given spill ID.
+    Returns the combined Phase 1–4 investigation for the given spill ID.
 
-    Currently available: **SPILL-001**
+    Bundled scenarios: **SPILL-001**, **SPILL-TEST-002**, **SPILL-TEST-003**.
+    Live uploads: any persisted **SPILL-LIVE-…** id whose drift has been reconstructed
+    (anchored GeoTIFF, or Phase 2 run from the upload page).
     """
     try:
         return get_investigation(spill_id)

@@ -1,0 +1,752 @@
+[
+  {
+    "name": "Kolleru Lake",
+    "state": "Andhra Pradesh",
+    "designation_date": "19-08-2002",
+    "area_hectares": 90100.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4Nw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Deepor Beel",
+    "state": "Assam",
+    "designation_date": "19-08-2002",
+    "area_hectares": 4000.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4Ng==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Kanwar Taal",
+    "state": "Bihar",
+    "designation_date": "21-07-2020",
+    "area_hectares": 2620.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTQwNA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Nanda Lake",
+    "state": "Goa",
+    "designation_date": "08-06-2022",
+    "area_hectares": 42.01,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA0MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Khijadiya Wildlife Sanctuary",
+    "state": "Gujarat",
+    "designation_date": "13-04-2021",
+    "area_hectares": 511.745,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA2Nw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Nalsarovar",
+    "state": "Gujarat",
+    "designation_date": "24-09-2012",
+    "area_hectares": 12000.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4OQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Thol Lake Wildlife Sanctuary",
+    "state": "Gujarat",
+    "designation_date": "05-04-2021",
+    "area_hectares": 699.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTU4Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Wadhvana Wetland",
+    "state": "Gujarat",
+    "designation_date": "05-04-2021",
+    "area_hectares": 630.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTU4MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sultanpur National Park",
+    "state": "Haryana",
+    "designation_date": "25-05-2021",
+    "area_hectares": 142.52,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTE0OQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Bhindawas Wildlife Sanctuary",
+    "state": "Haryana",
+    "designation_date": "25-05-2021",
+    "area_hectares": 412.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMxOQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Chandra Taal",
+    "state": "Himachal Pradesh",
+    "designation_date": "08-11-2005",
+    "area_hectares": 49.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMyOA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Pong Dam Lake",
+    "state": "Himachal Pradesh",
+    "designation_date": "19-08-2002",
+    "area_hectares": 15662.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5MA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Renuka Lake",
+    "state": "Himachal Pradesh",
+    "designation_date": "08-11-2005",
+    "area_hectares": 20.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTM2NA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Hokersar Wetland",
+    "state": "Jammu & Kashmir",
+    "designation_date": "08-11-2005",
+    "area_hectares": 1375.0,
+    "status": "Partial Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMzNg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Hygam Wetland Conservation Reserve",
+    "state": "Jammu & Kashmir",
+    "designation_date": "08-06-2022",
+    "area_hectares": 801.82,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEyMg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Shallbugh Wetland Conservation Reserve",
+    "state": "Jammu & Kashmir",
+    "designation_date": "08-06-2022",
+    "area_hectares": 1675.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEyMQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Wular Lake",
+    "state": "Jammu & Kashmir",
+    "designation_date": "23-03-1990",
+    "area_hectares": 18900.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTExNw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Surinsar-Mansar Lakes",
+    "state": "Jammu & Kashmir",
+    "designation_date": "08-11-2005",
+    "area_hectares": 350.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTM0OA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Ranganathittu Bird Sanctuary",
+    "state": "Karnataka",
+    "designation_date": "15-02-2022",
+    "area_hectares": 517.7,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA1NA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Ashtamudi Wetland",
+    "state": "Kerala",
+    "designation_date": "19-08-2002",
+    "area_hectares": 6140.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4NA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sasthamkotta Lake",
+    "state": "Kerala",
+    "designation_date": "19-08-2002",
+    "area_hectares": 373.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4Mg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Vembanad-Kol Wetland Complex",
+    "state": "Kerala",
+    "designation_date": "19-08-2002",
+    "area_hectares": 151250.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5Mg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Tso Kar Wetland Complex",
+    "state": "Ladakh",
+    "designation_date": "17-11-2020",
+    "area_hectares": 9577.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Unclassified",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEyMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Tsomoriri",
+    "state": "Ladakh",
+    "designation_date": "19-08-2002",
+    "area_hectares": 12000.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Bhoj Wetland Bhopal",
+    "state": "Madhya Pradesh",
+    "designation_date": "19-08-2002",
+    "area_hectares": 3201.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4NQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Yashwant Sagar, Indore",
+    "state": "Madhya Pradesh",
+    "designation_date": "07-01-2022",
+    "area_hectares": 822.9,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEyMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sakhya Sagar, Shivpuri",
+    "state": "Madhya Pradesh",
+    "designation_date": "07-01-2022",
+    "area_hectares": 248.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA0Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sirpur Wetland, Indore",
+    "state": "Madhya Pradesh",
+    "designation_date": "07-01-2022",
+    "area_hectares": 161.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA1Nw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Lonar Lake",
+    "state": "Maharashtra",
+    "designation_date": "22-07-2020",
+    "area_hectares": 427.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5Nw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Nandur-Madhameshwar",
+    "state": "Maharashtra",
+    "designation_date": "21-06-2019",
+    "area_hectares": 1437.0,
+    "status": "Partial Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwNA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Thane Creek",
+    "state": "Maharashtra",
+    "designation_date": "13-04-2022",
+    "area_hectares": 6521.08,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEyMw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Loktak Lake",
+    "state": "Manipur",
+    "designation_date": "23-03-1990",
+    "area_hectares": 26600.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEyMw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Pala Wetland",
+    "state": "Mizoram",
+    "designation_date": "31-08-2021",
+    "area_hectares": 1850.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA1MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Ansupa Lake",
+    "state": "Odisha",
+    "designation_date": "12-10-2021",
+    "area_hectares": 231.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEwOA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Bhitarkanika Mangroves",
+    "state": "Odisha",
+    "designation_date": "19-08-2002",
+    "area_hectares": 65000.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI4Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Chilika Lake",
+    "state": "Odisha",
+    "designation_date": "01-10-1981",
+    "area_hectares": 116500.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEyNA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Hirakud Reservoir",
+    "state": "Odisha",
+    "designation_date": "12-10-2021",
+    "area_hectares": 65400.0,
+    "status": "Partial Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjExNg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Satkosia Gorge",
+    "state": "Odisha",
+    "designation_date": "12-10-2021",
+    "area_hectares": 98196.72,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjExNw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Tampara Lake",
+    "state": "Odisha",
+    "designation_date": "12-10-2021",
+    "area_hectares": 300.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEwNw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Beas Conservation Reserve",
+    "state": "Punjab",
+    "designation_date": "26-09-2019",
+    "area_hectares": 6428.92,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwMg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Harike Wetland",
+    "state": "Punjab",
+    "designation_date": "23-03-1990",
+    "area_hectares": 4100.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEyNw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Kanjli Wetland",
+    "state": "Punjab",
+    "designation_date": "22-01-2002",
+    "area_hectares": 183.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5NA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Keshopur-Miani Community Reserve",
+    "state": "Punjab",
+    "designation_date": "26-09-2019",
+    "area_hectares": 343.9,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwMw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Nangal Wildlife Sanctuary",
+    "state": "Punjab",
+    "designation_date": "26-09-2019",
+    "area_hectares": 116.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwNQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Ropar Wetland",
+    "state": "Punjab",
+    "designation_date": "22-01-2002",
+    "area_hectares": 1365.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5NQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Keoladeo National Park",
+    "state": "Rajasthan",
+    "designation_date": "01-10-1981",
+    "area_hectares": 2873.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEwMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sambhar Lake",
+    "state": "Rajasthan",
+    "designation_date": "23-03-1990",
+    "area_hectares": 24000.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTEwMQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Chitrangudi Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-11-2021",
+    "area_hectares": 260.47,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEwMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Gulf of Mannar Marine Biosphere Reserve",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 52671.876,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA0NQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Kanjirankulam Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 96.891,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEwNA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Koonthankulam Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-11-2021",
+    "area_hectares": 72.04,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA3Ng==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Pallikaranai Marsh Reserve Forest",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 1247.537,
+    "status": "Partial Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA1Mg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Pichavaram Mangrove",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 1478.642,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA1Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Point Calimere Wildlife and Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "19-08-2002",
+    "area_hectares": 38500.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTIyMg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Suchindram Theroor Wetland Complex",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 94.229,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEyNA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Vembannur Wetland Complex",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 19.746,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA3OA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Vadavur Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 112.638,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjEwNg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Udhayamarthandapuram Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 43.767,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA2MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Vellode Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 77.185,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA2NA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Vedanthangal Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 40.348,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA2Mw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Karikili Bird Sanctuary",
+    "state": "Tamil Nadu",
+    "designation_date": "08-04-2022",
+    "area_hectares": 58.442,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA0OQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Rudrasagar Lake",
+    "state": "Tripura",
+    "designation_date": "08-11-2005",
+    "area_hectares": 240.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTM0Nw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Asan Conservation Reserve",
+    "state": "Uttarakhand",
+    "designation_date": "21-07-2020",
+    "area_hectares": 444.4,
+    "status": "Partial Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5Ng==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Bakhira Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "29-06-2021",
+    "area_hectares": 2894.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA3OQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Haiderpur Wetland",
+    "state": "Uttar Pradesh",
+    "designation_date": "13-04-2021",
+    "area_hectares": 6908.0,
+    "status": "Protected  Area",
+    "wetland_type": "Human-made",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MjA4MA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Samaspur Bird Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "03-10-2019",
+    "area_hectares": 799.371,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMxMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Nawabganj Bird Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "19-09-2019",
+    "area_hectares": 224.6,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwNw==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sandi Bird Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "26-09-2019",
+    "area_hectares": 308.54,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMxMQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Parvati Arga Bird Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "02-12-2019",
+    "area_hectares": 722.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwOA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Saman Bird Sanctuary",
+    "state": "Uttar Pradesh",
+    "designation_date": "02-12-2019",
+    "area_hectares": 526.3,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwOQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sur Sarovar Bird Sanctuary (Keetham)",
+    "state": "Uttar Pradesh",
+    "designation_date": "21-08-2020",
+    "area_hectares": 431.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5OA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sarsai Nawar Jheel",
+    "state": "Uttar Pradesh",
+    "designation_date": "19-09-2019",
+    "area_hectares": 161.27,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMxMg==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Upper Ganga River",
+    "state": "Uttar Pradesh",
+    "designation_date": "08-11-2005",
+    "area_hectares": 26590.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTI5MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "East Kolkata Wetlands",
+    "state": "West Bengal",
+    "designation_date": "19-08-2002",
+    "area_hectares": 12500.0,
+    "status": "Non-Protected  Area",
+    "wetland_type": "Natural (Inland)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTE1MQ==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  },
+  {
+    "name": "Sundarban Wetland",
+    "state": "West Bengal",
+    "designation_date": "30-01-2019",
+    "area_hectares": 423000.0,
+    "status": "Protected  Area",
+    "wetland_type": "Natural (Coastal)",
+    "source_url": "https://indianwetlands.in/view-wetland/?profile=MTMwMA==",
+    "source": "Government of India / MoEFCC Ramsar Sites dataset"
+  }
+]

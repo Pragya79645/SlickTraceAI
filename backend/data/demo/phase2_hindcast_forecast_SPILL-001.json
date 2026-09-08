@@ -1,0 +1,216 @@
+{
+  "spill_id": "SPILL-001",
+  "observation": {
+    "timestamp": "2026-08-28T21:02:13.675215+00:00",
+    "latitude": 19.070667,
+    "longitude": 72.968941,
+    "coordinate_source": "prototype_scene_georeference"
+  },
+  "environment": {
+    "source": "prototype_local_vector_field",
+    "current": {
+      "u_ms": 0.18,
+      "v_ms": 0.08
+    },
+    "wind": {
+      "u_ms": 4.0,
+      "v_ms": 2.0
+    },
+    "wind_factor": 0.03,
+    "drift": {
+      "u_ms": 0.3,
+      "v_ms": 0.14,
+      "speed_ms": 0.331059
+    }
+  },
+  "hindcast": {
+    "duration_hours": 6,
+    "step_minutes": 30,
+    "trajectory": [
+      {
+        "timestamp": "2026-08-28T21:02:13.675215+00:00",
+        "lat": 19.070667,
+        "lon": 72.968941,
+        "hours_before_observation": 0.0
+      },
+      {
+        "timestamp": "2026-08-28T20:32:13.675215+00:00",
+        "lat": 19.0684,
+        "lon": 72.963803,
+        "hours_before_observation": 0.5
+      },
+      {
+        "timestamp": "2026-08-28T20:02:13.675215+00:00",
+        "lat": 19.066134,
+        "lon": 72.958665,
+        "hours_before_observation": 1.0
+      },
+      {
+        "timestamp": "2026-08-28T19:32:13.675215+00:00",
+        "lat": 19.063868,
+        "lon": 72.953526,
+        "hours_before_observation": 1.5
+      },
+      {
+        "timestamp": "2026-08-28T19:02:13.675215+00:00",
+        "lat": 19.061602,
+        "lon": 72.948388,
+        "hours_before_observation": 2.0
+      },
+      {
+        "timestamp": "2026-08-28T18:32:13.675215+00:00",
+        "lat": 19.059335,
+        "lon": 72.94325,
+        "hours_before_observation": 2.5
+      },
+      {
+        "timestamp": "2026-08-28T18:02:13.675215+00:00",
+        "lat": 19.057069,
+        "lon": 72.938112,
+        "hours_before_observation": 3.0
+      },
+      {
+        "timestamp": "2026-08-28T17:32:13.675215+00:00",
+        "lat": 19.054803,
+        "lon": 72.932974,
+        "hours_before_observation": 3.5
+      },
+      {
+        "timestamp": "2026-08-28T17:02:13.675215+00:00",
+        "lat": 19.052536,
+        "lon": 72.927836,
+        "hours_before_observation": 4.0
+      },
+      {
+        "timestamp": "2026-08-28T16:32:13.675215+00:00",
+        "lat": 19.05027,
+        "lon": 72.922699,
+        "hours_before_observation": 4.5
+      },
+      {
+        "timestamp": "2026-08-28T16:02:13.675215+00:00",
+        "lat": 19.048004,
+        "lon": 72.917561,
+        "hours_before_observation": 5.0
+      },
+      {
+        "timestamp": "2026-08-28T15:32:13.675215+00:00",
+        "lat": 19.045737,
+        "lon": 72.912423,
+        "hours_before_observation": 5.5
+      },
+      {
+        "timestamp": "2026-08-28T15:02:13.675215+00:00",
+        "lat": 19.043471,
+        "lon": 72.907286,
+        "hours_before_observation": 6.0
+      }
+    ],
+    "estimated_origin": {
+      "timestamp": "2026-08-28T15:02:13.675215+00:00",
+      "lat": 19.043471,
+      "lon": 72.907286,
+      "hours_before_observation": 6.0
+    }
+  },
+  "forecast": {
+    "duration_hours": 6,
+    "step_minutes": 30,
+    "trajectory": [
+      {
+        "timestamp": "2026-08-28T21:02:13.675215+00:00",
+        "lat": 19.070667,
+        "lon": 72.968941,
+        "hours_after_observation": 0.0
+      },
+      {
+        "timestamp": "2026-08-28T21:32:13.675215+00:00",
+        "lat": 19.072933,
+        "lon": 72.97408,
+        "hours_after_observation": 0.5
+      },
+      {
+        "timestamp": "2026-08-28T22:02:13.675215+00:00",
+        "lat": 19.075199,
+        "lon": 72.979218,
+        "hours_after_observation": 1.0
+      },
+      {
+        "timestamp": "2026-08-28T22:32:13.675215+00:00",
+        "lat": 19.077466,
+        "lon": 72.984356,
+        "hours_after_observation": 1.5
+      },
+      {
+        "timestamp": "2026-08-28T23:02:13.675215+00:00",
+        "lat": 19.079732,
+        "lon": 72.989495,
+        "hours_after_observation": 2.0
+      },
+      {
+        "timestamp": "2026-08-28T23:32:13.675215+00:00",
+        "lat": 19.081998,
+        "lon": 72.994634,
+        "hours_after_observation": 2.5
+      },
+      {
+        "timestamp": "2026-08-29T00:02:13.675215+00:00",
+        "lat": 19.084264,
+        "lon": 72.999772,
+        "hours_after_observation": 3.0
+      },
+      {
+        "timestamp": "2026-08-29T00:32:13.675215+00:00",
+        "lat": 19.086531,
+        "lon": 73.004911,
+        "hours_after_observation": 3.5
+      },
+      {
+        "timestamp": "2026-08-29T01:02:13.675215+00:00",
+        "lat": 19.088797,
+        "lon": 73.01005,
+        "hours_after_observation": 4.0
+      },
+      {
+        "timestamp": "2026-08-29T01:32:13.675215+00:00",
+        "lat": 19.091063,
+        "lon": 73.015189,
+        "hours_after_observation": 4.5
+      },
+      {
+        "timestamp": "2026-08-29T02:02:13.675215+00:00",
+        "lat": 19.09333,
+        "lon": 73.020328,
+        "hours_after_observation": 5.0
+      },
+      {
+        "timestamp": "2026-08-29T02:32:13.675215+00:00",
+        "lat": 19.095596,
+        "lon": 73.025467,
+        "hours_after_observation": 5.5
+      },
+      {
+        "timestamp": "2026-08-29T03:02:13.675215+00:00",
+        "lat": 19.097862,
+        "lon": 73.030606,
+        "hours_after_observation": 6.0
+      }
+    ],
+    "forecast_endpoint": {
+      "timestamp": "2026-08-29T03:02:13.675215+00:00",
+      "lat": 19.097862,
+      "lon": 73.030606,
+      "hours_after_observation": 6.0
+    }
+  },
+  "method": {
+    "type": "Lagrangian_advection",
+    "formula": "oil_velocity = current + 0.03 * wind"
+  },
+  "prototype_limitations": [
+    "Geographic coordinates are prototype scene georeferencing because source PNG has no geospatial metadata",
+    "Ocean current and wind are prototype local vector-field values",
+    "Forecast does not yet model changing environmental conditions",
+    "Hindcast origin is an estimate, not a confirmed spill source"
+  ]
+}

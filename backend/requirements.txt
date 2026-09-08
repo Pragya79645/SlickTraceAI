@@ -1,0 +1,16 @@
+# ─── Web framework ────────────────────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.0.0
+python-multipart>=0.0.9        # required by POST /analyze (UploadFile / multipart form)
+
+# ─── Phase 1: SAR/EO segmentation inference ───────────────────────────────────
+ultralytics>=8.2.0             # YOLOv8-seg (pulls in torch / torchvision)
+opencv-python>=4.9.0           # image decode, contour geometry, moments
+numpy>=1.26.0
+
+# ─── Phase 5E: Ramsar GIS spatial exposure ────────────────────────────────────
+shapely>=2.0.0                 # trajectory LineString vs wetland polygon intersection
+
+# ─── Dev / test only ──────────────────────────────────────────────────────────
+requests>=2.31.0               # test_api.py drives a running server over HTTP

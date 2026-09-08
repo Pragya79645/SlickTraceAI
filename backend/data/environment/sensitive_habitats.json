@@ -1,0 +1,52 @@
+[
+  {
+    "id": "HABITAT-TCFS-001",
+    "name": "Thane Creek Flamingo Sanctuary",
+    "type": "Bird Sanctuary",
+    "latitude": 19.1125,
+    "longitude": 72.9985,
+    "protection_status": "Ramsar Wetland & Marine Protected Area (Category IV)",
+    "impact_radius_km": 4.0,
+    "source": "Maharashtra Forest Dept & Ramsar Secretariat (Ramsar Site No. 2490)"
+  },
+  {
+    "id": "HABITAT-EIMZ-002",
+    "name": "Elephanta Island Mangrove & Marine Ecosystem",
+    "type": "Mangrove",
+    "latitude": 18.9633,
+    "longitude": 72.9315,
+    "protection_status": "Coastal Regulation Zone I (Ecologically Sensitive)",
+    "impact_radius_km": 3.5,
+    "source": "Maharashtra Coastal Zone Management Authority (MCZMA)"
+  },
+  {
+    "id": "HABITAT-MBCW-003",
+    "name": "Mahim Bay Coastal Wetland & Mangrove Park",
+    "type": "Wetland",
+    "latitude": 19.0380,
+    "longitude": 72.8400,
+    "protection_status": "State Nature Park & Protected Mangrove Reserve",
+    "impact_radius_km": 3.0,
+    "source": "Maharashtra State Biodiversity Board"
+  },
+  {
+    "id": "HABITAT-ACRZ-004",
+    "name": "Alibaug Intertidal Reef & Olive Ridley Habitat",
+    "type": "Coral Reef",
+    "latitude": 18.6410,
+    "longitude": 72.8720,
+    "protection_status": "CRZ-I Marine Turtle Nesting Zone",
+    "impact_radius_km": 5.0,
+    "source": "Zoological Survey of India (ZSI Marine Division)"
+  },
+  {
+    "id": "HABITAT-MMS-005",
+    "name": "Malvan Marine Sanctuary (Sindhudurg)",
+    "type": "Marine Sanctuary",
+    "latitude": 16.0500,
+    "longitude": 73.4600,
+    "protection_status": "Wildlife Sanctuary (IUCN Category IV Marine Protected Area)",
+    "impact_radius_km": 6.0,
+    "source": "Wildlife Institute of India (WII Marine Protected Area Database)"
+  }
+]

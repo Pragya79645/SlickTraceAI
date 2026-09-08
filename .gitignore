@@ -1,0 +1,42 @@
+# Root Git Ignore for Oil Spill Detection & Attribution System
+
+# Node / Frontend Dependencies
+**/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+*.tsbuildinfo
+frontend/next-env.d.ts
+
+# Python Virtual Environments & Packages
+backend/slicktrace-env/
+slicktrace-env/
+venv/
+.venv/
+env/
+ENV/
+
+# Python Bytecode & Cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# User Uploads (keep directory structure, ignore raw uploaded images)
+backend/uploads/*.png
+backend/uploads/*.jpg
+backend/uploads/*.jpeg
+backend/uploads/*.tif
+backend/uploads/*.tiff
+
+# Environment & Secrets
+.env
+.env*.local
+*.pem
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

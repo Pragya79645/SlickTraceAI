@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FileText, LoaderCircle } from "lucide-react";
 import type { InvestigationResponse } from "@/lib/api";
 import { exportForensicDossier } from "@/lib/dossier";
 
@@ -29,8 +30,12 @@ export default function DossierButton({ data, className = "" }: { data: Investig
         title="Download a forensic dossier PDF for enforcement (MARPOL Annex I)"
         className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait bg-red-950/60 hover:bg-red-900/70 text-red-200 border-red-800 ${className}`}
       >
-        <span>{busy ? "⏳" : "📄"}</span>
-        <span>{busy ? "Building dossier…" : "Export Forensic Dossier (PDF)"}</span>
+        {busy ? (
+          <LoaderCircle size={13} strokeWidth={2} className="animate-spin" />
+        ) : (
+          <FileText size={13} strokeWidth={1.75} />
+        )}
+        <span className="hidden md:inline">{busy ? "Building dossier…" : "Dossier"}</span>
       </button>
       {error && <span className="text-[10px] text-red-400 font-mono">{error}</span>}
     </div>

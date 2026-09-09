@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useRef, useMemo, ChangeEvent, DragEvent } from "react";
 import {
-  analyzeSpillImage,
+  analyzeSpillImageStream,
   runDriftReconstruction,
   runAISCorrelation,
   runEcologicalAssessment,
@@ -13,12 +13,28 @@ import {
   type DriftAnalysis,
   type EcologicalAssessment,
   type InvestigationResponse,
+  type PipelineStageEvent,
   type PipelineStageInfo,
   type VesselAttribution,
 } from "@/lib/api";
 
+import {
+  Droplets,
+  FileImage,
+  MapPin,
+  Satellite,
+  Ship,
+  TriangleAlert,
+  Waves,
+  Zap,
+} from "lucide-react";
+
 import ModelMetricsPanel from "@/components/ModelMetricsPanel";
 import DossierButton from "@/components/DossierButton";
+import BorderGlow from "@/components/BorderGlow";
+import PipelineHUD from "@/components/PipelineHUD";
+import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 
 // Leaflet map component (client-only, SSR-safe)
 const SpillMap = dynamic(() => import("@/components/SpillMap"), {
@@ -37,6 +53,13 @@ const STAGE_BADGE_STYLE: Record<string, string> = {
   failed: "bg-red-950/70 text-red-300 border-red-700/80 font-bold",
 };
 
+const UPLOAD_STEPS = [
+  { n: "01", t: "Segment", d: "YOLOv8 finds and measures every slick in the scene." },
+  { n: "02", t: "Locate", d: "A GeoTIFF georeferences itself; a plain image asks you for the anchor." },
+  { n: "03", t: "Reconstruct", d: "Drift runs backwards 6 h with a 500-particle uncertainty ensemble." },
+  { n: "04", t: "Attribute", d: "AIS traffic is scored against the origin and ranked with its evidence." },
+];
+
 const RISK_BADGE: Record<string, string> = {
   HIGH: "bg-red-950/90 text-red-300 border-red-700 font-bold shadow-sm shadow-red-900/40",
   MEDIUM: "bg-amber-950/90 text-amber-300 border-amber-700 font-bold shadow-sm shadow-amber-900/40",
@@ -51,6 +74,8 @@ export default function StartInvestigation() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showRawScene, setShowRawScene] = useState(false);
+  const [pipelineEvents, setPipelineEvents] = useState<PipelineStageEvent[]>([]);
+  const [pipelineSummary, setPipelineSummary] = useState<string | null>(null);
 
   // Phase 2 Drift State
   const [latitude, setLatitude] = useState<string>("19.070667");
@@ -121,8 +146,21 @@ export default function StartInvestigation() {
     }
   };
 
-  const scrollToUpload = () => {
-    uploadSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+  /** Appends a telemetry line, or updates in place when the stage supersedes itself. */
+  const pushPipelineEvent = (event: PipelineStageEvent) => {
+    setPipelineEvents((prev) => {
+      if (event.replaces) {
+        const from = prev.length - 1;
+        for (let i = from; i >= 0; i--) {
+          if (prev[i].key === event.replaces) {
+            const next = [...prev];
+            next[i] = event;
+            return next;
+          }
+        }
+      }
+      return [...prev, event];
+    });
   };
 
   const handleAnalyzeClick = async () => {
@@ -133,10 +171,17 @@ export default function StartInvestigation() {
     setDriftResult(null);
     setAisResult(null);
     setSelectedVesselId(null);
+    setPipelineEvents([]);
+    setPipelineSummary(null);
 
     try {
-      const result = await analyzeSpillImage(file);
+      const result = await analyzeSpillImageStream(file, undefined, pushPipelineEvent);
       setAnalysisResult(result);
+      setPipelineSummary(
+        result.attribution?.candidate_vessels[0]
+          ? `${result.spill_id} — primary suspect ${result.attribution.candidate_vessels[0].vessel_name} (MMSI ${result.attribution.candidate_vessels[0].vessel_id}) at ${result.attribution.candidate_vessels[0].score}/100`
+          : `${result.spill_id} — ${result.detection_count} slick region(s) detected`
+      );
       if (result.timestamp) {
         setTimestamp(result.timestamp);
       }
@@ -292,14 +337,14 @@ export default function StartInvestigation() {
             return {
               ...stg,
               status: "complete" as const,
-              status_label: "✓ ORIGIN RECONSTRUCTED",
+              status_label: "ORIGIN RECONSTRUCTED",
             };
           }
           if (stg.stage_key === "ais_correlation") {
             return {
               ...stg,
               status: "complete" as const,
-              status_label: `✓ ${aisResult.candidate_vessels.length} VESSELS CORRELATED`,
+              status_label: `${aisResult.candidate_vessels.length} VESSELS CORRELATED`,
               summary: `Correlated AIS telemetry across ${aisResult.candidate_vessels.length} vessels in the origin corridor.`,
             };
           }
@@ -308,7 +353,7 @@ export default function StartInvestigation() {
             return {
               ...stg,
               status: "complete" as const,
-              status_label: "✓ SUSPECTS RANKED",
+              status_label: "SUSPECTS RANKED",
               summary: `Top ranked: ${top ? top.vessel_name : "None"} (${top ? top.score : 0}/100 - ${top ? top.risk : "LOW"})`,
             };
           }
@@ -317,7 +362,7 @@ export default function StartInvestigation() {
             return {
               ...stg,
               status: "complete" as const,
-              status_label: "✓ RECONSTRUCTED",
+              status_label: "RECONSTRUCTED",
               summary: `Estimated Origin: (${driftResult.hindcast.estimated_origin.lat.toFixed(4)}°N, ${driftResult.hindcast.estimated_origin.lon.toFixed(4)}°E) at ${driftResult.hindcast.estimated_origin.hours_before_observation}h before observation.`,
             };
           }
@@ -325,7 +370,7 @@ export default function StartInvestigation() {
             return {
               ...stg,
               status: "inputs_required" as const,
-              status_label: "⚠ READY FOR AIS INGESTION",
+              status_label: "READY FOR AIS INGESTION",
               summary: "Origin corridor reconstructed. Ready to correlate with spatio-temporal AIS vessel telemetry stream.",
             };
           }
@@ -336,145 +381,33 @@ export default function StartInvestigation() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
-      {/* ── Top Header ────────────────────────────────────────────────────────── */}
-      <header className="flex-none border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm">
-              ST
-            </div>
-            <span className="text-lg font-black tracking-tight text-white">
-              SlickTrace
-            </span>
-            <span className="text-lg font-light text-amber-400">AI</span>
-          </div>
-          <div className="h-4 w-px bg-slate-700 hidden sm:block" />
-          <span className="text-xs text-slate-400 hidden sm:block font-medium">
-            Marine Oil Spill Investigation &amp; Attribution
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/60">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            END-TO-END PIPELINE ACTIVE
-          </span>
-          <Link
-            href="/dashboard"
-            className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition-colors flex items-center gap-1.5"
-          >
-            <span>Demo: SPILL-001</span>
-            <span className="text-slate-400">→</span>
-          </Link>
-        </div>
-      </header>
+      <SiteNav />
 
       {/* ── Main Content Area ─────────────────────────────────────────────────── */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 flex flex-col justify-center">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 pt-32 sm:pt-36 pb-16">
+        {/* ── Page header (upload state only) ────────────────────────────────── */}
         {!analysisResult && (
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-5">
-              <span className="text-amber-400">⚡</span> Next-Gen Maritime Intelligence
+          <div className="mb-9 text-center max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-[11px] font-semibold uppercase tracking-[0.14em]">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              New investigation
             </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight mb-4">
-              Marine Oil Spill <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-300 to-amber-200">
-                Investigation &amp; Attribution
-              </span>
+            <h1 className="mt-5 text-3xl sm:text-4xl font-black tracking-tight text-white">
+              Upload a satellite scene
             </h1>
-
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto font-normal">
-              Detect suspicious oil slicks with YOLOv8, reconstruct physical origin corridors with Lagrangian drift,
-              correlate vessel movement with AIS telemetry, and rank candidates for enforcement action.
+            <p className="mt-3.5 text-sm text-slate-400 leading-relaxed">
+              A georeferenced GeoTIFF runs the entire chain in one request — detection, origin
+              reconstruction, vessel attribution and ecological screening. A plain PNG or JPEG runs
+              detection first, then asks you where the scene is.
             </p>
-
-            {/* Workflow Stage Pills */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-mono font-semibold text-slate-400">
-              <span className="px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-amber-300">
-                01. SAR/EO Detection
-              </span>
-              <span className="text-slate-600">→</span>
-              <span className="px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-indigo-300">
-                02. Lagrangian Drift
-              </span>
-              <span className="text-slate-600">→</span>
-              <span className="px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-emerald-300">
-                03. AIS Attribution
-              </span>
-            </div>
-
-            {/* Primary Action Buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                onClick={scrollToUpload}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm tracking-wide transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>START NEW INVESTIGATION</span>
-                <span>↓</span>
-              </button>
-
-              <Link
-                href="/dashboard"
-                className="w-full sm:w-auto px-7 py-3.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-sm tracking-wide transition-colors flex items-center justify-center gap-2"
-              >
-                <span>OPEN DEMO CASE (SPILL-001)</span>
-                <span className="text-slate-400">→</span>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* ── 3 Key Pillar Cards (Hero only) ─────────────────────────────────── */}
-        {!analysisResult && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-            <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-sm relative overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm mb-3">
-                01
-              </div>
-              <h3 className="font-bold text-white text-base mb-1.5 flex items-center gap-2">
-                <span>Detect &amp; Characterize</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Segment oil slicks in SAR/EO scenes with YOLOv8 instance segmentation. Extracts precise polygon geometry, area (km²), elongation ratio, and weathering age estimate.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-sm relative overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm mb-3">
-                02
-              </div>
-              <h3 className="font-bold text-white text-base mb-1.5 flex items-center gap-2">
-                <span>Drift Reconstruction</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Applies a 2D Lagrangian advection model combining surface current and 3% wind factor to backward-trace the origin corridor and forecast forward trajectory.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-sm relative overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm mb-3">
-                03
-              </div>
-              <h3 className="font-bold text-white text-base mb-1.5 flex items-center gap-2">
-                <span>AIS Vessel Attribution</span>
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Correlates AIS tracks with the reconstructed origin window using 4 explainable weights (Proximity 35%, Temporal 20%, Trajectory 30%, Behaviour 15%) to rank high-risk vessels.
-              </p>
-            </div>
           </div>
         )}
 
         {/* ── Start Investigation Upload Zone / Live Console ──────────────────── */}
-        <div
-          ref={uploadSectionRef}
-          id="upload-section"
-          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-8 shadow-2xl transition-all"
-        >
+        <div ref={uploadSectionRef} id="upload-section">
           {/* If analysis result is available, show the Polished Live Investigation Console */}
           {analysisResult ? (
-            <div className="space-y-8">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 sm:p-8 shadow-2xl space-y-8">
               {/* ── Section 1: Obvious Live Investigation Header ──────────────────── */}
               <div className="border-b border-slate-800 pb-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -498,7 +431,7 @@ export default function StartInvestigation() {
                   <span className="px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 tracking-wider self-start sm:self-auto flex items-center gap-1.5 shadow-md">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     {analysisResult.status === "spill_detected"
-                      ? "✓ SPILL DETECTED"
+                      ? "SPILL DETECTED"
                       : "NO SPILL DETECTED"}
                   </span>
                 </div>
@@ -547,6 +480,16 @@ export default function StartInvestigation() {
                   </div>
                 </div>
 
+                {/* Execution trail — kept on screen so the run stays auditable */}
+                {pipelineEvents.length > 0 && (
+                  <PipelineHUD
+                    events={pipelineEvents}
+                    running={false}
+                    summary={pipelineSummary}
+                    error={null}
+                  />
+                )}
+
                 <ModelMetricsPanel compact />
 
                 {/* Scene preview with segmentation masks painted on */}
@@ -577,7 +520,7 @@ export default function StartInvestigation() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border-t border-slate-800 text-[11px] font-mono">
                         {analysisResult.georeference && (
                           <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-emerald-200">
-                            <div className="font-bold text-emerald-300">📍 AUTO-GEOREFERENCED FROM GEOTIFF</div>
+                            <div className="font-bold text-ok flex items-center gap-1.5"><MapPin size={12} strokeWidth={1.75} />AUTO-GEOREFERENCED FROM GEOTIFF</div>
                             <div className="text-emerald-200/80 mt-0.5">
                               {analysisResult.georeference.crs} · {analysisResult.georeference.gsd_m} m/px native · {analysisResult.georeference.width}×{analysisResult.georeference.height} px scene
                               {analysisResult.georeference.inference_scale > 1 && <> · inferred at 1/{analysisResult.georeference.inference_scale.toFixed(2)}</>}
@@ -592,7 +535,7 @@ export default function StartInvestigation() {
                         )}
                         {analysisResult.detection?.bonn_volume && (
                           <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
-                            <div className="font-bold text-amber-300">🛢 ESTIMATED VOLUME (BONN AGREEMENT)</div>
+                            <div className="font-bold text-accent flex items-center gap-1.5"><Droplets size={12} strokeWidth={1.75} />ESTIMATED VOLUME (BONN AGREEMENT)</div>
                             <div className="text-white text-base font-black mt-0.5">
                               {analysisResult.detection.bonn_volume.volume_tonnes_min.toLocaleString()}–{analysisResult.detection.bonn_volume.volume_tonnes_max.toLocaleString()} t
                               <span className="text-slate-500 text-[10px] font-normal ml-1.5">({analysisResult.detection.bonn_volume.volume_m3_min}–{analysisResult.detection.bonn_volume.volume_m3_max} m³)</span>
@@ -753,7 +696,7 @@ export default function StartInvestigation() {
                         onClick={handlePreFillMumbai}
                         className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded bg-indigo-900/60 hover:bg-indigo-800 text-indigo-200 border border-indigo-700/60 transition-colors cursor-pointer"
                       >
-                        📍 Pre-fill Offshore Mumbai Anchor
+                        <MapPin size={12} strokeWidth={1.75} className="inline mr-1 -mt-0.5" />Pre-fill Offshore Mumbai Anchor
                       </button>
                     </div>
 
@@ -800,7 +743,7 @@ export default function StartInvestigation() {
 
                     {driftError && (
                       <div className="p-2.5 rounded bg-red-950/60 border border-red-800 text-xs text-red-300">
-                        ⚠ {driftError}
+                        <TriangleAlert size={13} strokeWidth={2} className="inline mr-1.5 -mt-0.5" />{driftError}
                       </div>
                     )}
 
@@ -827,7 +770,7 @@ export default function StartInvestigation() {
                         ) : (
                           <>
                             <span>RUN DRIFT RECONSTRUCTION</span>
-                            <span>🌊</span>
+                            <Waves size={14} strokeWidth={1.75} />
                           </>
                         )}
                       </button>
@@ -889,14 +832,14 @@ export default function StartInvestigation() {
                         ) : (
                           <>
                             <span>CORRELATE AIS VESSELS</span>
-                            <span>🚢</span>
+                            <Ship size={14} strokeWidth={1.75} />
                           </>
                         )}
                       </button>
                     )}
                     {aisError && (
                       <div className="p-2.5 rounded bg-red-950/60 border border-red-800 text-xs text-red-300 max-w-md mx-auto">
-                        ⚠ {aisError}
+                        <TriangleAlert size={13} strokeWidth={2} className="inline mr-1.5 -mt-0.5" />{aisError}
                       </div>
                     )}
                   </div>
@@ -909,7 +852,7 @@ export default function StartInvestigation() {
                           <div>
                             <span className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-widest block">
                               {selectedVesselId === aisResult.candidate_vessels[0]?.vessel_id
-                                ? "★ #1 TOP CANDIDATE VESSEL"
+                                ? "#1 TOP CANDIDATE VESSEL"
                                 : `SELECTED CANDIDATE (#${aisResult.candidate_vessels.findIndex(v => v.vessel_id === selectedVessel.vessel_id) + 1})`}
                             </span>
                             <h4 className="text-2xl sm:text-3xl font-black text-white font-mono mt-1">
@@ -988,7 +931,7 @@ export default function StartInvestigation() {
                           <div className="space-y-1.5 bg-slate-950/70 p-3.5 rounded-lg border border-slate-800">
                             {selectedVessel.reasons.map((reason, rIdx) => (
                               <div key={rIdx} className="text-xs text-slate-200 flex items-start gap-2">
-                                <span className="text-emerald-400 font-bold">✓</span>
+                                <span className="text-ok shrink-0 mt-0.5">—</span>
                                 <span className="capitalize">{reason}</span>
                               </div>
                             ))}
@@ -1066,7 +1009,7 @@ export default function StartInvestigation() {
                                   <td className="py-2 px-3.5 text-white font-medium">
                                     {vessel.vessel_name}
                                     {vessel.went_dark && (
-                                      <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-red-950 text-red-300 border border-red-700">⚠ DARK</span>
+                                      <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-risk-high/10 text-risk-high border border-risk-high/40">DARK</span>
                                     )}
                                   </td>
                                   <td className="py-2 px-3.5 text-slate-400">{vessel.vessel_id}</td>
@@ -1103,7 +1046,7 @@ export default function StartInvestigation() {
                     href={`/dashboard?case=${encodeURIComponent(analysisResult.spill_id)}`}
                     className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
                   >
-                    <span>👉 VIEW LIVE INVESTIGATION IN 7-STEP DASHBOARD</span>
+                    <span>VIEW LIVE INVESTIGATION IN 7-STEP DASHBOARD</span>
                     <span>→</span>
                   </Link>
                 ) : (
@@ -1118,141 +1061,215 @@ export default function StartInvestigation() {
               </div>
             </div>
           ) : (
-            <>
-              {/* Drag and drop area */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={onFileInputChange}
-                accept="image/png,image/jpeg,image/tiff,.tif,.tiff"
-                className="hidden"
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+              {/* ── Dropzone ───────────────────────────────────────────────── */}
+              <div className="lg:col-span-2">
+                <BorderGlow
+                  borderRadius={18}
+                  backgroundColor="#0B1120"
+                  glowColor="38 92 72"
+                  colors={["#fbbf24", "#f59e0b", "#fb923c"]}
+                  glowRadius={40}
+                  glowIntensity={0.9}
+                  edgeSensitivity={28}
+                >
+                  <div className="p-5 sm:p-6 flex flex-col">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={onFileInputChange}
+                      accept="image/png,image/jpeg,image/tiff,.tif,.tiff"
+                      className="hidden"
+                    />
 
-              <div
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 sm:p-12 text-center cursor-pointer transition-all ${
-                  isDragging
-                    ? "border-amber-400 bg-amber-500/10 scale-[1.01]"
-                    : file
-                    ? "border-emerald-500/60 bg-emerald-950/20"
-                    : "border-slate-700 hover:border-amber-400/60 bg-slate-950/60 hover:bg-slate-950"
-                }`}
-              >
-                {file ? (
-                  <div className="flex flex-col items-center gap-3">
-                    {previewUrl ? (
-                      <div className="w-36 h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shadow-md relative mb-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={previewUrl}
-                          alt="Uploaded SAR Scene"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                    {/* Once a run starts, the dropzone gives way to live telemetry */}
+                    {isAnalyzing || pipelineEvents.length > 0 ? (
+                      <PipelineHUD
+                        events={pipelineEvents}
+                        running={isAnalyzing}
+                        summary={pipelineSummary}
+                        error={errorMessage}
+                      />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-emerald-900/40 border border-emerald-700 flex items-center justify-center text-2xl mb-1 text-emerald-300">
-                        📄
+                    <div
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Choose or drop a satellite scene"
+                      className={`min-h-[300px] sm:min-h-[340px] flex items-center justify-center border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 ${
+                        isDragging
+                          ? "border-amber-400 bg-amber-500/10"
+                          : file
+                          ? "border-emerald-500/60 bg-emerald-950/20"
+                          : "border-slate-700 hover:border-amber-400/60 bg-slate-950/50 hover:bg-slate-950"
+                      }`}
+                    >
+                      {file ? (
+                        <div className="flex flex-col items-center gap-3">
+                          {previewUrl ? (
+                            <div className="w-40 h-40 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shadow-md">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={previewUrl}
+                                alt="Selected scene preview"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-emerald-900/40 border border-emerald-700 flex items-center justify-center text-2xl text-emerald-300">
+                              <FileImage size={26} strokeWidth={1.25} />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-mono text-sm font-bold text-emerald-300 break-all px-4">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB ·{" "}
+                              {/\.tiff?$/i.test(file.name) ? "GeoTIFF — will self-locate" : file.type || "image"}
+                            </p>
+                          </div>
+                          <span className="text-[11px] text-amber-400 font-semibold underline underline-offset-2">
+                            Click to replace
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-3xl text-slate-300">
+                            <Satellite size={26} strokeWidth={1.25} />
+                          </div>
+                          <p className="text-lg font-bold text-slate-100">
+                            Drop a SAR / EO satellite scene
+                          </p>
+                          <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                            Sentinel-1 GRD GeoTIFF, or a plain PNG / JPEG. Up to 500 MB.
+                          </p>
+                          <div className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-md bg-slate-900 border border-slate-700 text-slate-200 hover:bg-slate-800 transition-colors">
+                            Browse files
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    )}
+
+                    {/* The HUD renders its own failure line, so only show this when it is hidden */}
+                    {errorMessage && !isAnalyzing && pipelineEvents.length === 0 && (
+                      <div className="mt-4 p-3 rounded-lg border border-red-800/60 bg-red-950/40 text-xs text-red-300 flex items-start gap-2">
+                        <TriangleAlert size={13} strokeWidth={2} className="shrink-0 mt-0.5" />
+                        <span>{errorMessage}</span>
                       </div>
                     )}
-                    <div>
-                      <p className="font-mono text-sm font-bold text-emerald-300">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB · {file.type || "GeoTIFF/Image"}
-                      </p>
+
+                    <button
+                      disabled={!file || isAnalyzing}
+                      onClick={handleAnalyzeClick}
+                      className={`mt-5 w-full px-6 py-3.5 rounded-lg font-bold text-sm tracking-wider transition-all flex items-center justify-center gap-2 ${
+                        file && !isAnalyzing
+                          ? "bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer shadow-lg shadow-amber-500/20"
+                          : isAnalyzing
+                          ? "bg-amber-600/80 text-slate-950 cursor-wait animate-pulse"
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                      }`}
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                          <span>RUNNING SEGMENTATION…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>ANALYZE SCENE</span>
+                          {file && <Zap size={14} strokeWidth={2} />}
+                        </>
+                      )}
+                    </button>
+
+                    <p className="mt-3 text-[11px] text-slate-500 text-center leading-relaxed">
+                      Model loaded:{" "}
+                      <span className="font-mono text-slate-400">oilspill_yolov8_seg_best.pt</span> —
+                      inference runs live on your scene, nothing is pre-computed.
+                    </p>
+                  </div>
+                </BorderGlow>
+              </div>
+
+              {/* ── Sidebar ────────────────────────────────────────────────── */}
+              <aside className="space-y-4">
+                <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/50">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    What happens next
+                  </h2>
+                  <ol className="mt-4 space-y-3.5">
+                    {UPLOAD_STEPS.map((s) => (
+                      <li key={s.n} className="flex gap-3">
+                        <span className="w-7 h-7 shrink-0 rounded-lg border border-slate-700 bg-slate-950 flex items-center justify-center font-mono font-bold text-[10px] text-amber-300">
+                          {s.n}
+                        </span>
+                        <div>
+                          <div className="text-[13px] font-bold text-slate-200 leading-tight">{s.t}</div>
+                          <div className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{s.d}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-900/50">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Accepted input
+                  </h2>
+                  <dl className="mt-3.5 space-y-2.5 text-[11px]">
+                    <div className="flex items-start gap-2">
+                      <dt className="w-20 shrink-0 font-mono text-emerald-400">GeoTIFF</dt>
+                      <dd className="text-slate-400 leading-relaxed">
+                        Best result — CRS, transform and acquisition time are read from the file, and
+                        all four phases run automatically.
+                      </dd>
                     </div>
-                    <span className="text-[11px] text-amber-400 font-semibold underline underline-offset-2">
-                      Click to replace file
+                    <div className="flex items-start gap-2">
+                      <dt className="w-20 shrink-0 font-mono text-slate-400">PNG / JPG</dt>
+                      <dd className="text-slate-500 leading-relaxed">
+                        Detection only — you supply the scene coordinates to unlock the drift and
+                        attribution phases.
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <ModelMetricsPanel compact />
+
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-between gap-2 p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-900 transition-colors group"
+                >
+                  <span>
+                    <span className="block text-[13px] font-bold text-slate-200">
+                      No scene to hand?
                     </span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2.5">
-                    <div className="w-14 h-14 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-2xl text-slate-300 mb-1">
-                      🛰
-                    </div>
-                    <p className="text-base font-bold text-slate-200">
-                      Drop SAR / EO satellite scene here
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      PNG / JPG, or a georeferenced GeoTIFF (Sentinel-1 GRD) up to 500 MB — GeoTIFFs are located automatically
-                    </p>
-                    <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800">
-                      Browse Files
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {errorMessage && (
-                <div className="mt-4 p-3 rounded-lg border border-red-800/60 bg-red-950/40 text-xs text-red-300 flex items-center gap-2">
-                  <span>⚠</span>
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-
-              {/* Action Row */}
-              <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
-                <div className="text-xs text-slate-500 leading-relaxed text-center sm:text-left">
-                  <span className="font-semibold text-slate-400">YOLOv8 Model Status:</span>{" "}
-                  Loaded (<span className="font-mono text-slate-400">oilspill_yolov8_seg_best.pt</span>).
-                  Clicking Analyze will execute live segmentation inference.
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <button
-                    disabled={!file || isAnalyzing}
-                    onClick={handleAnalyzeClick}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-lg font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-2 ${
-                      file && !isAnalyzing
-                        ? "bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer shadow-md shadow-amber-500/20"
-                        : isAnalyzing
-                        ? "bg-amber-600/80 text-slate-950 cursor-wait animate-pulse"
-                        : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                    }`}
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <span className="inline-block w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                        <span>ANALYZING SAR IMAGE...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>ANALYZE SPILL</span>
-                        {file && <span>⚡</span>}
-                      </>
-                    )}
-                  </button>
-
-                  <Link
-                    href="/dashboard"
-                    className="w-full sm:w-auto px-5 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs tracking-wider transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
-                  >
-                    <span>OPEN DEMO (SPILL-001)</span>
-                    <span>→</span>
-                  </Link>
-                </div>
-              </div>
-            </>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">
+                      Open a solved case with full evidence
+                    </span>
+                  </span>
+                  <span className="text-slate-500 group-hover:text-amber-400 transition-colors" aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+              </aside>
+            </div>
           )}
         </div>
       </main>
 
-      {/* ── Footer ────────────────────────────────────────────────────────────── */}
-      <footer className="flex-none border-t border-slate-800/80 bg-slate-950/80 py-4 px-6 text-center text-xs text-slate-600 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-mono">
-          <span>SlickTrace AI v1.0</span>
-          <span>·</span>
-          <span>SAR Detection + Lagrangian Hindcast + AIS Attribution</span>
-        </div>
-        <div className="text-[11px] text-slate-600">
-          Developed for Marine Environment Protection &amp; Enforcement Intelligence
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

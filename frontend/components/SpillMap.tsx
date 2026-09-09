@@ -4,7 +4,7 @@
  * SpillMap — Forensic Reconstruction, Dynamic AIS Trajectories & Ecological Threat Overlay
  *
  * Core Causal & Ecological Chain:
- *   ① OBSERVED SLICK ──► ② BACKWARD DRIFT ──► ③ ESTIMATED SOURCE CORRIDOR ──► ④ AIS CORRIDOR MATCH ──► ⑤ TOP CANDIDATE ──► ⑥ ECOLOGICAL THREAT SCREENING
+ *   ① observed slick → ② backward drift → ③ estimated source corridor → ④ AIS corridor match → ⑤ top candidate → ⑥ ecological screening
  *
  * Features:
  *   - Real chronological AIS vessel tracks from telemetry dataset
@@ -12,12 +12,13 @@
  *   - Closest approach distance vector connector line (e.g. 0.06 km)
  *   - Measured evidence markers (Speed Reduction, Closest Approach, Corridor Transit)
  *   - Sensitive Marine Habitats & Prototype Screening Radii (Phase 5E)
- *   - Investigation Replay Controller (-6h ──► Now ──► +6h)
+ *   - Investigation replay controller (-6h → now → +6h)
  *   - "Why #1?" Forensic callout card & explainable scoring breakdown
  */
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import type { GeoTimestep, InvestigationResponse, CandidateVessel, HabitatImpact, RamsarThreatSite, SpillDetection } from "@/lib/api";
+import { Leaf, Radar, TriangleAlert, X } from "lucide-react";
 import { fetchRamsarGeoJSON } from "@/lib/api";
 
 const METERS_PER_DEG_LAT = 111195; // matches backend drift_service.py
@@ -292,7 +293,7 @@ export default function SpillMap({
         const flowIcon = L.divIcon({
           className: "",
           html: `<div style="background:#4338ca;color:#e0e7ff;padding:2px 6px;border-radius:6px;font-size:9px;font-weight:900;border:1px solid #6366f1;box-shadow:0 2px 6px #0008;white-space:nowrap;">
-            ◄ DRIFT ${(data.drift.environment.drift.speed_ms * 1.94384).toFixed(1)} kts
+            DRIFT ${(data.drift.environment.drift.speed_ms * 1.94384).toFixed(1)} kts
           </div>`,
           iconSize: [120, 18],
           iconAnchor: [60, 9],
@@ -491,7 +492,7 @@ export default function SpillMap({
           const badge = L.divIcon({
             className: "",
             html: `<div style="background:${dark ? "#7f1d1d" : "#431407"};color:${dark ? "#fecaca" : "#fed7aa"};padding:2px 7px;border-radius:6px;font-size:9px;font-weight:900;border:1.5px solid ${dark ? "#ef4444" : "#f97316"};box-shadow:0 2px 8px #000a;white-space:nowrap;letter-spacing:0.03em;">
-              ${dark ? "⚠ " : ""}${label}
+              ${label}
             </div>`,
             iconSize: [200, 18],
             iconAnchor: [100, 9],
@@ -552,7 +553,7 @@ export default function SpillMap({
             transform:rotate(45deg);
             cursor:pointer;
           ">
-            <span style="transform:rotate(-45deg);">${isTop ? "★" : idx + 1}</span>
+            <span style="transform:rotate(-45deg);">${isTop ? "1" : idx + 1}</span>
           </div>`,
           iconSize: [isTop ? 26 : 20, isTop ? 20 : 20],
           iconAnchor: [isTop ? 13 : 10, isTop ? 13 : 10],
@@ -568,7 +569,7 @@ export default function SpillMap({
               <b>Time Offset:</b> ${vessel.time_difference_hours}h<br>
               <hr style="margin:6px 0;border-color:#334155">
               <b>Measured AIS Evidence:</b><br>
-              ${vessel.reasons.map((r) => `✓ ${r}`).join("<br>")}
+              ${vessel.reasons.map((r) => `&bull; ${r}`).join("<br>")}
               <hr style="margin:6px 0;border-color:#334155">
               <small style="color:#94a3b8">Analytical ranking, not proof of responsibility.</small>
             </div>`
@@ -580,7 +581,7 @@ export default function SpillMap({
         });
       });
 
-      // ── 🌿 SENSITIVE MARINE HABITATS & SCREENING RADII (Phase 5E) ───────────
+      // ── ⑥ SENSITIVE MARINE HABITATS & SCREENING RADII (Phase 5E) ────────────
       if (data.ecology && data.ecology.impacts) {
         data.ecology.impacts.forEach((imp: HabitatImpact) => {
           const conf = THREAT_COLORS[imp.threat_level] ?? THREAT_COLORS.LOW;
@@ -595,7 +596,7 @@ export default function SpillMap({
             dashArray: isThreatened ? undefined : "4 4",
           })
             .bindTooltip(
-              `<b>🌿 ${imp.habitat_name}</b><br>Type: ${imp.type} · Radius: ${imp.impact_radius_km} km<br>Threat Level: <b>${imp.threat_level}</b><br>Min Forecast Dist: <b>${imp.minimum_distance_km} km</b>${
+              `<b>${imp.habitat_name}</b><br>Type: ${imp.type} · Radius: ${imp.impact_radius_km} km<br>Threat Level: <b>${imp.threat_level}</b><br>Min Forecast Dist: <b>${imp.minimum_distance_km} km</b>${
                 imp.estimated_time_to_impact_hours !== null
                   ? `<br>Est. Exposure Time: <b>+${imp.estimated_time_to_impact_hours}h</b>`
                   : ""
@@ -614,7 +615,7 @@ export default function SpillMap({
               display:flex;align-items:center;justify-content:center;
               font-size:11px;cursor:pointer;
             ">
-              🌿
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
             </div>`,
             iconSize: [22, 22],
             iconAnchor: [11, 11],
@@ -623,7 +624,7 @@ export default function SpillMap({
           L.marker([imp.latitude, imp.longitude], { icon: habIcon, zIndexOffset: 350 })
             .bindPopup(
               `<div style="font-family:monospace;min-width:260px;line-height:1.5;font-size:12px">
-                <b style="font-size:13px;color:#10b981">🌿 SENSITIVE MARINE HABITAT</b><br>
+                <b style="font-size:13px;color:#10b981">SENSITIVE MARINE HABITAT</b><br>
                 <b style="color:#fff">${imp.habitat_name}</b> (${imp.type})<br>
                 <span style="color:${conf.border};font-weight:bold">● THREAT LEVEL: ${imp.threat_level}</span><br>
                 <b>Screening Radius:</b> ${imp.impact_radius_km} km<br>
@@ -644,7 +645,7 @@ export default function SpillMap({
         });
       }
 
-      // ── 🌿 AUTHORITATIVE RAMSAR WETLAND POLYGONS (GeoJSON Layer) ────────────
+      // ── ⑥ AUTHORITATIVE RAMSAR WETLAND POLYGONS (GeoJSON Layer) ────────────
       try {
         const ramsarGeoJSON = await fetchRamsarGeoJSON();
         if (ramsarGeoJSON && ramsarGeoJSON.features && !isCancelled) {
@@ -679,18 +680,18 @@ export default function SpillMap({
               const distStr = matchedThreat ? `${matchedThreat.minimum_distance_km} km` : "N/A";
 
               let contactStr = "No Direct Boundary Contact";
-              let exposureLabel = "✓ NO EXPOSURE";
+              let exposureLabel = "NO EXPOSURE";
               let badgeColor = "#34d399";
               let badgeBg = "#064e3b";
 
               if (exposureBasis === "CURRENT_OBSERVATION") {
                 contactStr = "Observed Spill Overlap (t=0h)";
-                exposureLabel = "⚠ CURRENTLY INTERSECTED";
+                exposureLabel = "CURRENTLY INTERSECTED";
                 badgeColor = "#fda4af";
                 badgeBg = "#881337";
               } else if (exposureBasis === "FORECAST_INTERSECTION") {
                 contactStr = `Estimated first contact: +${matchedThreat?.estimated_time_to_impact_hours}h`;
-                exposureLabel = "⚠ FORECAST IMPACT";
+                exposureLabel = "FORECAST IMPACT";
                 badgeColor = "#fda4af";
                 badgeBg = "#881337";
               } else if (exposureBasis === "PROXIMITY_ONLY") {
@@ -710,7 +711,7 @@ export default function SpillMap({
               layer.bindPopup(
                 `<div style="font-family:monospace;min-width:280px;line-height:1.5;font-size:12px">
                   <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;">
-                    <b style="color:#10b981;font-size:13px">🌿 RAMSAR WETLAND</b>
+                    <b style="color:#10b981;font-size:13px">RAMSAR WETLAND</b>
                     <span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:bold;background:${badgeBg};color:${badgeColor};">${exposureLabel}</span>
                   </div>
                   <b style="color:#fff;font-size:13px">${name}</b> <span style="color:#94a3b8">(${state})</span><br>
@@ -813,7 +814,7 @@ export default function SpillMap({
             const spdIcon = L.divIcon({
               className: "",
               html: `<div style="background:#ea580c;color:#fff;font-size:9px;font-weight:900;padding:2px 5px;border-radius:4px;border:1px solid #fed7aa;box-shadow:0 2px 6px #000a;white-space:nowrap;">
-                ⚡ SPEED DROP (${pt.sog_knots} kts)
+                SPEED DROP (${pt.sog_knots} kts)
               </div>`,
               iconSize: [110, 18],
               iconAnchor: [55, 9],
@@ -959,7 +960,7 @@ export default function SpillMap({
             onChange={(e) => setLayers((prev) => ({ ...prev, ramsar: e.target.checked }))}
             className="accent-emerald-500 rounded"
           />
-          <span>🌿 Ramsar Sensitive Areas</span>
+          <span className="flex items-center gap-1"><Leaf size={11} strokeWidth={2} />Ramsar Sensitive Areas</span>
         </label>
         {data.drift.ensemble && (
           <label className="flex items-center gap-1.5 cursor-pointer hover:text-red-300 text-red-300 font-bold">
@@ -969,7 +970,7 @@ export default function SpillMap({
               onChange={(e) => setLayers((prev) => ({ ...prev, uncertainty: e.target.checked }))}
               className="accent-red-500 rounded"
             />
-            <span>◎ Uncertainty ({data.drift.ensemble.n_particles}-particle MC)</span>
+            <span className="flex items-center gap-1"><Radar size={11} strokeWidth={2} />Uncertainty ({data.drift.ensemble.n_particles}-particle MC)</span>
           </label>
         )}
       </div>
@@ -1002,8 +1003,8 @@ export default function SpillMap({
             <span className="truncate">
               <strong>
                 {directRamsar.exposure_basis === "CURRENT_OBSERVATION"
-                  ? "⚠ CURRENT OVERLAP: "
-                  : "⚠ FORECAST IMPACT: "}
+                  ? "CURRENT OVERLAP: "
+                  : "FORECAST IMPACT: "}
               </strong>
               {directRamsar.site_name} (
               {directRamsar.exposure_basis === "CURRENT_OBSERVATION"
@@ -1027,14 +1028,14 @@ export default function SpillMap({
         <div className="absolute top-3 right-3 z-[500] bg-slate-900/95 backdrop-blur-md border-2 border-amber-500/80 rounded-xl p-3.5 shadow-2xl text-xs font-mono max-w-[320px] space-y-2 animate-in fade-in">
           <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
             <span className="font-black text-amber-400 tracking-wider text-[11px]">
-              {isTopActive ? `★ WHY ${activeVessel.vessel_name} RANKS #1` : `SELECTED: ${activeVessel.vessel_name}`}
+              {isTopActive ? `WHY ${activeVessel.vessel_name} RANKS #1` : `SELECTED: ${activeVessel.vessel_name}`}
             </span>
             <button
               type="button"
               onClick={() => setShowWhyCard(false)}
               className="text-slate-500 hover:text-white text-[10px]"
             >
-              ✕
+              <X size={12} strokeWidth={2.5} />
             </button>
           </div>
 
@@ -1052,7 +1053,7 @@ export default function SpillMap({
               const hhmm = (iso: string) => new Date(iso).toISOString().slice(11, 16);
               return (
                 <div className="p-1.5 rounded bg-red-950/70 border border-red-700 text-red-200">
-                  <div className="font-black text-red-300 text-[10px] tracking-wider">⚠ WENT DARK — AIS SILENT {hhmm(g.start_timestamp)}–{hhmm(g.end_timestamp)} UTC ({g.duration_hours.toFixed(1)} h)</div>
+                  <div className="font-black text-red-300 text-[10px] tracking-wider flex items-center gap-1"><TriangleAlert size={10} strokeWidth={2.5} />WENT DARK — AIS SILENT {hhmm(g.start_timestamp)}–{hhmm(g.end_timestamp)} UTC ({g.duration_hours.toFixed(1)} h)</div>
                   <div className="text-[10px] text-red-200/80">Silence spans the discharge time{g.inferred_distance_km != null ? ` · inferred path ${g.inferred_distance_km} km from origin` : ""}</div>
                 </div>
               );
@@ -1126,7 +1127,7 @@ export default function SpillMap({
         </div>
         <div className="flex items-center gap-2 text-emerald-300">
           <span className="w-3.5 h-3.5 rounded-full bg-emerald-700 border border-emerald-400 flex items-center justify-center text-[8px] flex-none">
-            🌿
+            <Leaf size={11} strokeWidth={2} />
           </span>
           <span>⑥ Sensitive Habitats &amp; Radii ({data.ecology?.assessment.habitats_evaluated || 0})</span>
         </div>
@@ -1145,7 +1146,7 @@ export default function SpillMap({
           <span>{isReplaying ? "⏸ PAUSE" : "▶ REPLAY INVESTIGATION"}</span>
         </button>
         <span className="text-[10px] text-slate-400 hidden sm:inline">
-          -6h ──► Now ──► +6h
+          -6h → Now → +6h
         </span>
       </div>
     </div>

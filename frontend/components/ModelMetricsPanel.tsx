@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { CircuitBoard } from "lucide-react";
 import { fetchModelMetrics, type ModelMetrics } from "@/lib/api";
 
 const pct = (v?: number | null) => (v == null ? "—" : `${(v * 100).toFixed(1)}%`);
@@ -67,7 +68,8 @@ export default function ModelMetricsPanel({ compact = false }: { compact?: boole
         className="w-full flex items-center justify-between px-3.5 py-2.5 cursor-pointer hover:bg-slate-800/50 rounded-xl"
       >
         <span className="font-mono font-bold text-slate-200 flex items-center gap-2">
-          <span className="text-emerald-400">◈</span> MODEL CARD · {metrics.architecture.toUpperCase()}
+          <CircuitBoard size={13} strokeWidth={1.75} className="text-accent" />
+          MODEL CARD · {metrics.architecture.toUpperCase()}
           <span className="text-slate-500 font-normal">· mask mAP50 {pct(metrics.mask_map50)} · P {pct(metrics.mask_precision)} · R {pct(metrics.mask_recall)}</span>
         </span>
         <span className="text-slate-500">{open ? "▾" : "▸"}</span>

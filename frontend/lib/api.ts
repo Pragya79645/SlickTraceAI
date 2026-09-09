@@ -823,10 +823,21 @@ export async function runEcologicalExposure(
   return res.json() as Promise<EcologicalExposureResponse>;
 }
 
-export async function fetchRamsarGeoJSON(): Promise<import("geojson").FeatureCollection> {
+export interface GeoJSONFeatureCollection {
+  type: string;
+  features: Array<{
+    type: string;
+    geometry: unknown;
+    properties?: Record<string, unknown>;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+export async function fetchRamsarGeoJSON(): Promise<GeoJSONFeatureCollection> {
   const res = await fetch(`${BACKEND}/api/investigations/ramsar-geojson`);
   if (!res.ok) {
     throw new Error(`Failed to fetch Ramsar GeoJSON: ${res.statusText}`);
   }
-  return res.json() as Promise<import("geojson").FeatureCollection>;
+  return res.json() as Promise<GeoJSONFeatureCollection>;
 }

@@ -656,7 +656,8 @@ export default function SpillMap({
             });
           }
 
-          L.geoJSON(ramsarGeoJSON, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          L.geoJSON(ramsarGeoJSON as any, {
             style: (feature) => {
               const name = feature?.properties?.name?.toLowerCase() || "";
               const matchedThreat = threatsMap.get(name);

@@ -59,7 +59,11 @@ TILE_CONF_FLOOR = 0.30            # whole-scene tiles see far more open water: r
 MAX_TILE_FILL = 0.85              # a mask covering ≥ this fraction of its tile is "the tile", not a slick
 # Physical gate for whole scenes: oil damps capillary waves, so a real slick is darker
 # than the water around it. Merged instances that fail this are texture, not oil.
-MIN_DAMPING_DB = 2.0              # real slicks damp 3–10 dB; ~1 dB is clutter variation
+# Oil damps capillary waves by roughly 4–10 dB. The classic dark-spot look-alikes — wind
+# shadows, sheltered bays, biogenic films — sit at 1–3 dB. Calibrated against a real
+# Sentinel-1 RTC scene of the Mumbai approaches: at 4.0 dB every coastal look-alike in that
+# scene is rejected while a true slick is retained untouched.
+MIN_DAMPING_DB = 4.0
 RING_WIDTH_PX = 24
 
 # ─── Paths ────────────────────────────────────────────────────────────────────

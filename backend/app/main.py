@@ -27,13 +27,23 @@ app = FastAPI(
 
 # ─── CORS (allow local Next.js dev server & Vercel cloud deployments) ──────────
 
+# Explicit allowlist — add any new Vercel preview URLs here if needed.
+ALLOWED_ORIGINS = [
+    # Production Vercel deployment
+    "https://slicktraceai.vercel.app",
+    # Local development
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r"^https?://.*",
+    allow_origins=ALLOWED_ORIGINS,
+    # Also allow any Vercel preview deployments (slicktraceai-*.vercel.app)
+    allow_origin_regex=r"^https://slicktraceai(-[a-z0-9]+)?\.vercel\.app$",
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────

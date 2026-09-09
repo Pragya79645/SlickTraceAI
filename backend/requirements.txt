@@ -6,8 +6,9 @@ python-multipart>=0.0.9        # required by POST /analyze (UploadFile / multipa
 
 # ─── Phase 1: SAR/EO segmentation inference ───────────────────────────────────
 ultralytics>=8.2.0             # YOLOv8-seg (pulls in torch / torchvision)
-opencv-python>=4.9.0           # image decode, contour geometry, moments
+opencv-python-headless>=4.9.0  # headless build for cloud servers (no libGL dependency)
 numpy>=1.26.0
+rasterio>=1.3.0                # GeoTIFF satellite parsing & embedded georeferencing
 
 # ─── Phase 5E: Ramsar GIS spatial exposure ────────────────────────────────────
 shapely>=2.0.0                 # trajectory LineString vs wetland polygon intersection

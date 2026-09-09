@@ -47,6 +47,12 @@ LEE_WINDOW = 7                 # speckle-filter window (SNAP-style Lee filter) f
 # was trained on bright oil over a flat dark background; this renders SAR into that domain.
 MODEL_REMAP_PERCENTILES = (75.0, 99.5)
 
+# dB display window, in robust sigmas around the water mode. Asymmetric on purpose: a
+# slick sits below the sea it floats on, so the range opens further down than up.
+SAR_DB_BELOW = 7.0
+SAR_DB_ABOVE = 6.0
+SAR_DB_MIN_SPAN = 10.0   # dB
+
 # Sentinel-1/2 product naming embeds the sensing start time, e.g.
 #   S1A_IW_GRDH_1SDV_20260828T210213_20260828T210238_...
 _SENTINEL_TS = re.compile(r"(?<!\d)(\d{8})T(\d{6})(?!\d)")
@@ -91,6 +97,66 @@ def lee_filter(band: np.ndarray, window: int = LEE_WINDOW) -> np.ndarray:
     noise_var = float(np.mean(var)) if var.size else 0.0
     k = var / (var + noise_var + 1e-6)
     return mean + k * (x - mean)
+
+
+def _is_linear_power(band: np.ndarray, dtype: str) -> bool:
+    """
+    True for calibrated backscatter stored as linear power (gamma0 / sigma0), which is how
+    analysis-ready products such as Sentinel-1 RTC ship. Integer DN products are already
+    quasi-linear in amplitude and are left alone.
+    """
+    if not str(dtype).startswith("float"):
+        return False
+    finite = band[np.isfinite(band)]
+    if finite.size == 0:
+        return False
+    # gamma0 over water sits around 1e-3–1e-1; anything already in dB is mostly negative.
+    return float(np.nanmedian(finite)) > 0.0 and float(np.nanpercentile(finite, 99)) < 100.0
+
+
+def to_decibels(band: np.ndarray) -> np.ndarray:
+    """
+    Linear backscatter → dB.
+
+    SAR power is log-distributed: on a real ocean scene the 98th percentile is driven by
+    land and ship returns two orders of magnitude above the water, so a linear percentile
+    stretch collapses every bit of sea texture into the bottom couple of grey levels — and
+    an oil slick is precisely a *texture* difference. Converting to dB first is standard
+    SAR practice and is what makes damping visible.
+    """
+    out = np.full(band.shape, np.nan, dtype=np.float32)
+    positive = np.isfinite(band) & (band > 0)
+    out[positive] = 10.0 * np.log10(band[positive])
+    return out
+
+
+def stretch_db_to_uint8(db: np.ndarray) -> np.ndarray:
+    """
+    Renders a dB SAR band with the *water* exposed rather than the land.
+
+    On a coastal scene the bright tail is land and shipping, tens of dB above the sea, so
+    an ordinary p2–p98 stretch spends almost its whole range on terrain and leaves the
+    ocean in the bottom few grey levels — which is precisely where an oil slick lives.
+    Instead the window is referenced to the modal surface (the sea): centred on the median
+    with a robust MAD spread, opened wider below than above so damping stays resolvable,
+    and clipped so land simply saturates white.
+    """
+    finite = db[np.isfinite(db)]
+    if finite.size == 0:
+        return np.zeros(db.shape, np.uint8)
+
+    median = float(np.median(finite))
+    sigma = float(np.median(np.abs(finite - median))) * 1.4826
+    sigma = max(sigma, 0.35)                       # guard a pathologically flat sea
+
+    lo, hi = median - SAR_DB_BELOW * sigma, median + SAR_DB_ABOVE * sigma
+    if hi - lo < SAR_DB_MIN_SPAN:                  # keep a usable dynamic range
+        pad = (SAR_DB_MIN_SPAN - (hi - lo)) / 2.0
+        lo, hi = lo - pad, hi + pad
+
+    out = np.clip((db - lo) / (hi - lo), 0.0, 1.0) * 255.0
+    out[~np.isfinite(db)] = 0
+    return out.astype(np.uint8)
 
 
 def dark_spot_enhance(physical_u8: np.ndarray) -> np.ndarray:
@@ -187,12 +253,22 @@ def decode_geotiff(image_bytes: bytes, filename: str, invert_for_model: bool = T
             data = src.read(band_idx, out_shape=(len(band_idx), out_h, out_w))
             nodata = src.nodata
 
-            # Single-band SAR intensity: despeckle first (Lee), then stretch
+            # Single-band SAR intensity: despeckle in the linear power domain (which is
+            # what the Lee filter's multiplicative-speckle model assumes), then convert
+            # calibrated backscatter to decibels before stretching.
+            is_db = False
             if data.shape[0] == 1:
                 data = data.astype(np.float32)
                 data[0] = lee_filter(data[0])
+                if _is_linear_power(data[0], src.dtypes[0]):
+                    data[0] = to_decibels(data[0])
+                    is_db = True
 
-            stretched = [_stretch_to_uint8(data[i], nodata) for i in range(data.shape[0])]
+            stretched = (
+                [stretch_db_to_uint8(data[0])]
+                if is_db
+                else [_stretch_to_uint8(data[i], nodata) for i in range(data.shape[0])]
+            )
             polarity = "as_is"
             if len(stretched) == 1:
                 physical = stretched[0]

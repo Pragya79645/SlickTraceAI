@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* ─── Enterprise Typographic System ──────────────────────────────────────────
+   --font-display : Plus Jakarta Sans — Crisp, authoritative modern headings
+   --font-sans    : Inter             — Mission-grade UI chrome, navigation, body copy
+   --font-mono    : JetBrains Mono    — Telemetry, coordinates, MMSI, timestamps, scores
+   ─────────────────────────────────────────────────────────────────────────── */
+
 :root {
   --background: #0a0f1a;
   --foreground: #e2e8f0;
@@ -9,8 +15,46 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+}
+
+/* ─── Colour discipline ──────────────────────────────────────────────────────
+   One neutral ladder for every surface, ONE accent for action, and semantic
+   colours reserved strictly for data meaning (risk level, pass/fail, provenance).
+   Decorative colour is what makes an interface look generated; if a hue here is
+   not carrying information, it should not be on screen.
+
+     bg-ink-950   page          bg-ink-900   section     bg-ink-850  card
+     bg-ink-800   raised        border-line  hairline    border-line-strong  emphasis
+     text-fg      primary       text-fg-muted secondary  text-fg-dim  tertiary
+     text-accent  action only
+     risk-high / risk-med / risk-low / ok / info — data semantics only
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-ink-950: #080a0f;
+  --color-ink-900: #0d1017;
+  --color-ink-850: #12161f;
+  --color-ink-800: #181d28;
+  --color-ink-700: #1f2532;
+
+  --color-line: #222834;
+  --color-line-strong: #2e3644;
+
+  --color-fg: #e6e8ec;
+  --color-fg-muted: #98a0ae;
+  --color-fg-dim: #6b7280;
+
+  --color-accent: #f0b429;
+  --color-accent-hover: #f7c948;
+  --color-accent-soft: #2a2008;
+
+  --color-risk-high: #e5484d;
+  --color-risk-med: #f0b429;
+  --color-risk-low: #7d8590;
+  --color-ok: #3fb950;
+  --color-info: #4f8cc9;
 }
 
 html,
@@ -22,8 +66,53 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter", "Geist Sans", Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
 }
+
+/* ─── Executive Heading Hierarchy ─────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+/* ─── Global Type Utilities ──────────────────────────────────────────────── */
+
+/* Telemetry / data readout — coordinates, MMSI, timestamps, scores, AIS data */
+.font-mono,
+code,
+pre,
+[class*="font-mono"] {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+/* High-legibility body / evidence / explanations */
+.font-body {
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+}
+
+/* Display headings */
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.025em;
+}
+
 
 /* Leaflet popup overrides for dark theme */
 .leaflet-popup-content-wrapper {
@@ -69,4 +158,26 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* ─── Moving Radar / Surveillance Sweep Animations ───────────────────────── */
+@keyframes radar-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(300%);
+    opacity: 0.2;
+  }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

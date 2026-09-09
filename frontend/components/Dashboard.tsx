@@ -1,8 +1,35 @@
 "use client";
 
+/**
+ * Dashboard — the investigation console.
+ *
+ * Layout follows the argument, not the data model: the verdict strip states the finding,
+ * the map carries the reconstruction, and the panels beside it justify the score. One
+ * surface level throughout — hairline dividers instead of nested cards — so the eye lands
+ * on the map and the evidence rather than on box edges.
+ */
+
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState, useMemo } from "react";
+import {
+  ArrowRight,
+  BookOpen,
+  ChevronDown,
+  Clock,
+  Crosshair,
+  Gauge,
+  LayoutGrid,
+  Leaf,
+  MapPin,
+  Radio,
+  Route,
+  Ship,
+  Signal,
+  Target,
+  TriangleAlert,
+  Upload,
+} from "lucide-react";
 import {
   fetchInvestigation,
   buildCaseList,
@@ -11,22 +38,31 @@ import {
 } from "@/lib/api";
 import InvestigationStoryMode from "@/components/InvestigationStoryMode";
 import DossierButton from "@/components/DossierButton";
+import SiteFooter from "@/components/SiteFooter";
 
 // Leaflet requires browser APIs — load client-side only, never SSR
 const SpillMap = dynamic(() => import("@/components/SpillMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-slate-900 rounded-xl text-slate-500 text-xs font-mono tracking-wider border border-slate-800">
-      Loading interactive geospatial map…
+    <div className="w-full h-full flex items-center justify-center bg-ink-900 text-fg-dim text-xs font-mono tracking-wider">
+      Loading geospatial reconstruction…
     </div>
   ),
 });
 
-const RISK_BADGE: Record<string, string> = {
-  HIGH: "bg-red-950 text-red-300 border-red-700 font-bold shadow-sm shadow-red-900/40",
-  MEDIUM: "bg-amber-950 text-amber-300 border-amber-700 font-bold shadow-sm shadow-amber-900/40",
-  LOW: "bg-slate-800 text-slate-400 border-slate-700 font-normal",
+/** Risk is data, so it is one of the few places colour carries meaning. */
+const RISK_TONE: Record<string, string> = {
+  HIGH: "text-risk-high border-risk-high/40 bg-risk-high/10",
+  MEDIUM: "text-risk-med border-risk-med/40 bg-risk-med/10",
+  LOW: "text-risk-low border-line-strong bg-ink-800",
 };
+
+const FACTORS = [
+  { key: "proximity_score" as const, max: 35, label: "Proximity", icon: MapPin, note: (v: CandidateVessel) => `${v.min_distance_km} km from origin` },
+  { key: "temporal_score" as const, max: 20, label: "Timing", icon: Clock, note: (v: CandidateVessel) => `${v.time_difference_hours} h offset` },
+  { key: "trajectory_score" as const, max: 30, label: "Trajectory", icon: Route, note: () => "origin corridor overlap" },
+  { key: "behavioral_score" as const, max: 15, label: "Behaviour", icon: Gauge, note: (v: CandidateVessel) => (v.went_dark ? "transponder silence" : "speed & transmission") },
+];
 
 interface Props {
   data: InvestigationResponse;
@@ -43,21 +79,16 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
   const [viewMode, setViewMode] = useState<"story" | "console">("story");
   const [isLoadingCase, setIsLoadingCase] = useState(false);
   const [caseError, setCaseError] = useState<string | null>(null);
-  const [showFormulaDetails, setShowFormulaDetails] = useState(false);
+  const [showMethod, setShowMethod] = useState(false);
 
   const { drift, attribution } = data;
 
-  // All timeline steps: hindcast (oldest → obs) + forecast (obs → future).
+  // Chronological timeline: origin (−6h) → observation → forecast (+6h).
   // The backend orders hindcast.trajectory observation-first, so reverse it here.
   const allSteps = useMemo(
-    () => [
-      ...[...drift.hindcast.trajectory].reverse(),
-      ...drift.forecast.trajectory.slice(1), // skip duplicate t=0
-    ],
+    () => [...[...drift.hindcast.trajectory].reverse(), ...drift.forecast.trajectory.slice(1)],
     [drift]
   );
-
-  // Start slider at observation point (end of hindcast)
   const obsIdx = drift.hindcast.trajectory.length - 1;
 
   const [timelineIdx, setTimelineIdx] = useState(obsIdx);
@@ -66,37 +97,20 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
   );
 
   const currentStep = allSteps[timelineIdx];
+  const hoursOffset =
+    currentStep?.hours_before_observation != null
+      ? -currentStep.hours_before_observation
+      : currentStep?.hours_after_observation ?? 0;
 
-  // Determine which timeline phase the slider is in
   const phase =
-    timelineIdx < obsIdx
-      ? "HINDCAST (-6h to 0h)"
-      : timelineIdx === obsIdx
-      ? "OBSERVATION (0h)"
-      : "FORECAST (0h to +6h)";
+    timelineIdx < obsIdx ? "Hindcast" : timelineIdx === obsIdx ? "Observation" : "Forecast";
 
-  const phaseColor =
-    timelineIdx < obsIdx
-      ? "text-indigo-400"
-      : timelineIdx === obsIdx
-      ? "text-amber-400"
-      : "text-emerald-400";
-
-  // Selected candidate vessel (defaults to top candidate)
   const selectedVessel: CandidateVessel = useMemo(() => {
     if (!attribution.candidate_vessels.length) {
       return {
-        vessel_id: "N/A",
-        vessel_name: "No Candidates",
-        score: 0,
-        risk: "LOW",
-        min_distance_km: 0,
-        time_difference_hours: 0,
-        proximity_score: 0,
-        temporal_score: 0,
-        trajectory_score: 0,
-        behavioral_score: 0,
-        reasons: [],
+        vessel_id: "—", vessel_name: "No candidates", score: 0, risk: "LOW",
+        min_distance_km: 0, time_difference_hours: 0, proximity_score: 0,
+        temporal_score: 0, trajectory_score: 0, behavioral_score: 0, reasons: [],
       };
     }
     return (
@@ -106,10 +120,10 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
   }, [attribution, selectedVesselId]);
 
   const topCandidate = attribution.candidate_vessels[0];
-  const topCandidateName = topCandidate?.vessel_name || "N/A";
   const isTopCandidate = selectedVessel.vessel_id === topCandidate?.vessel_id;
-  const isValidationScenario = data.spill_id !== "SPILL-001" && !data.is_live;
   const activeCase = cases.find((c) => c.id === data.spill_id);
+  const origin = drift.hindcast.estimated_origin;
+  const exposure = data.ecological_exposure;
 
   const handleSwitchCase = async (caseId: string) => {
     if (caseId === data.spill_id || isLoadingCase) return;
@@ -121,69 +135,33 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
       setSelectedVesselId(freshData.attribution.candidate_vessels[0]?.vessel_id || null);
       setTimelineIdx(freshData.drift.hindcast.trajectory.length - 1);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load case";
-      setCaseError(msg);
+      setCaseError(err instanceof Error ? err.message : "Failed to load case");
     } finally {
       setIsLoadingCase(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500/30">
-      {/* ── Top View-Mode Header & Universal Controls ────────────────────────── */}
-      <header className="flex-none border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-30 px-6 py-2.5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm">
+    <div className="min-h-screen bg-ink-950 text-fg flex flex-col font-sans selection:bg-accent/30">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <header className="flex-none border-b border-line bg-ink-900/95 backdrop-blur-md sticky top-0 z-30">
+        <div className="px-5 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/" className="flex items-center gap-2 shrink-0 group">
+              <span className="w-7 h-7 rounded-md bg-accent/15 border border-accent/40 flex items-center justify-center text-accent font-black text-xs">
                 ST
-              </div>
-              <span className="text-lg font-black tracking-tight text-white">
+              </span>
+              <span className="text-[15px] font-bold tracking-tight text-fg group-hover:text-accent transition-colors">
                 SlickTrace
               </span>
-              <span className="text-lg font-light text-amber-400">AI</span>
-            </div>
-            <div className="h-4 w-px bg-slate-700 hidden sm:block" />
-            <span className="text-xs text-slate-300 font-semibold hidden sm:block">
-              Maritime Oil Spill Investigation &amp; Dynamic Attribution
-            </span>
-          </div>
+            </Link>
 
-          {/* Primary View Mode Switcher + Scenario Switcher */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-mono">
-              <button
-                type="button"
-                onClick={() => setViewMode("story")}
-                className={`px-3 py-1 rounded transition-all cursor-pointer font-bold flex items-center gap-1.5 ${
-                  viewMode === "story"
-                    ? "bg-amber-500 text-slate-950 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <span>🎬</span>
-                <span>Investigation Mode</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("console")}
-                className={`px-3 py-1 rounded transition-all cursor-pointer font-bold flex items-center gap-1.5 ${
-                  viewMode === "console"
-                    ? "bg-amber-500 text-slate-950 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <span>📊</span>
-                <span>Detailed Console</span>
-              </button>
-            </div>
+            <div className="h-5 w-px bg-line hidden sm:block" />
 
-            {/* Scenario Selector */}
-            <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-mono">
+            {/* Case switcher */}
+            <div className="flex items-center gap-1 min-w-0 overflow-x-auto">
               {cases.map((c) => {
                 const active = data.spill_id === c.id;
-                const accent = { amber: "text-amber-400", indigo: "text-indigo-300", red: "text-red-300", emerald: "text-emerald-300" }[c.accent];
                 return (
                   <button
                     key={c.id}
@@ -191,8 +169,10 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
                     onClick={() => handleSwitchCase(c.id)}
                     disabled={isLoadingCase}
                     title={c.headline}
-                    className={`px-2.5 py-1 rounded transition-all cursor-pointer font-bold ${
-                      active ? `bg-slate-800 ${accent} border border-slate-700` : "text-slate-400 hover:text-slate-200"
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono whitespace-nowrap transition-colors disabled:opacity-50 ${
+                      active
+                        ? "bg-ink-800 text-accent border border-line-strong"
+                        : "text-fg-dim hover:text-fg-muted border border-transparent"
                     }`}
                   >
                     {c.label}
@@ -200,72 +180,121 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
                 );
               })}
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* View toggle */}
+            <div className="flex items-center rounded-md border border-line bg-ink-850 p-0.5">
+              {([
+                ["story", "Story", BookOpen],
+                ["console", "Console", LayoutGrid],
+              ] as const).map(([mode, label, Icon]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setViewMode(mode)}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
+                    viewMode === mode ? "bg-ink-700 text-fg" : "text-fg-dim hover:text-fg-muted"
+                  }`}
+                >
+                  <Icon size={13} strokeWidth={1.75} />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
 
             <DossierButton data={data} />
+
             <Link
-              href="/"
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors flex items-center gap-1.5"
+              href="/investigate"
+              className="text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-line bg-ink-850 hover:bg-ink-800 text-fg-muted hover:text-fg transition-colors flex items-center gap-1.5"
             >
-              <span>← Upload</span>
+              <Upload size={13} strokeWidth={1.75} />
+              <span className="hidden md:inline">Upload</span>
             </Link>
           </div>
         </div>
 
-        {caseError && (
-          <div className="mt-2 p-2 rounded bg-red-950/80 border border-red-800 text-xs text-red-300">
-            ⚠ {caseError}
+        {(caseError || notice) && (
+          <div className="px-5 pb-2.5 -mt-0.5">
+            <p className={`text-[11px] font-mono ${caseError ? "text-risk-high" : "text-risk-med"}`}>
+              {caseError ?? notice}
+            </p>
           </div>
         )}
       </header>
 
-      {/* ── View 1: Guided Investigation Story Mode ───────────────────────────── */}
       {viewMode === "story" ? (
         <InvestigationStoryMode
           data={data}
-          cases={cases}
-          notice={notice}
           onSwitchCase={handleSwitchCase}
           onOpenConsole={() => setViewMode("console")}
         />
       ) : (
-        /* ── View 2: Full Analytical Investigator Console ─────────────────────── */
-        <div className="flex-1 flex flex-col">
-          {/* Scenario Banner */}
-          <div className="bg-slate-900/60 border-b border-slate-800/80 px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
-                  data.is_live
-                    ? "bg-emerald-950 text-emerald-300 border border-emerald-700"
-                    : isValidationScenario
-                    ? "bg-indigo-950 text-indigo-300 border border-indigo-700"
-                    : "bg-amber-950 text-amber-300 border border-amber-700"
-                }`}
-              >
-                {data.is_live ? "● LIVE INVESTIGATION" : isValidationScenario ? "CONTROLLED VALIDATION SCENARIO" : "REFERENCE BASELINE CASE"}
-              </span>
-              <span className="text-slate-300">
-                Active Case: <strong className="text-white">{data.spill_id}</strong> · Top Lead:{" "}
-                <strong className="text-amber-400">{topCandidateName}</strong> (
-                {topCandidate?.score.toFixed(1)}/100 · {topCandidate?.risk} RISK)
-                {topCandidate?.went_dark && (
-                  <strong className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-red-950 text-red-300 border border-red-700">⚠ WENT DARK</strong>
+        <>
+          {/* ── Verdict strip: the finding, in one line ──────────────────────── */}
+          <div className="border-b border-line bg-ink-900">
+            <div className="max-w-[1800px] mx-auto px-5 py-3.5 flex flex-col xl:flex-row xl:items-center gap-3 xl:gap-6">
+              <div className="flex items-center gap-2.5 shrink-0">
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.12em] border ${
+                    data.is_live
+                      ? "text-ok border-ok/40 bg-ok/10"
+                      : "text-fg-muted border-line-strong bg-ink-850"
+                  }`}
+                >
+                  {data.is_live ? "Live" : "Case"} {data.spill_id}
+                </span>
+                {activeCase && (
+                  <span className="text-[11px] text-fg-dim hidden lg:inline truncate max-w-md">
+                    {activeCase.headline}
+                  </span>
                 )}
-              </span>
-              {activeCase && <span className="text-slate-500 hidden lg:inline">— {activeCase.headline}</span>}
-            </div>
+              </div>
 
-            <div className="text-[11px] text-slate-400 flex items-center gap-2">
-              <span className="text-emerald-400 font-bold">⚡ Dynamic Engine Proof:</span>
-              <span>Same attribution algorithm. Different AIS evidence. Different #1 candidate.</span>
+              {/* The three-step chain — the whole argument, left to right */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-[11px] font-mono min-w-0">
+                <span className="flex items-center gap-1.5 text-fg-muted">
+                  <Crosshair size={13} strokeWidth={1.75} className="text-fg-dim" />
+                  Slick {drift.observation.latitude.toFixed(4)}°N {drift.observation.longitude.toFixed(4)}°E
+                </span>
+                <ArrowRight size={12} className="text-fg-dim shrink-0" />
+                <span className="flex items-center gap-1.5 text-fg-muted">
+                  <Route size={13} strokeWidth={1.75} className="text-fg-dim" />
+                  Origin −{origin.hours_before_observation}h at {origin.lat.toFixed(4)}°N {origin.lon.toFixed(4)}°E
+                </span>
+                <ArrowRight size={12} className="text-fg-dim shrink-0" />
+                {topCandidate ? (
+                  <span className="flex items-center gap-1.5 text-fg font-semibold">
+                    <Ship size={13} strokeWidth={1.75} className="text-accent" />
+                    {topCandidate.vessel_name}
+                    <span className="text-fg-dim font-normal">
+                      · {topCandidate.min_distance_km} km away · {topCandidate.score.toFixed(1)}/100
+                    </span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${RISK_TONE[topCandidate.risk]}`}
+                    >
+                      {topCandidate.risk}
+                    </span>
+                    {topCandidate.went_dark && (
+                      <span className="px-1.5 py-0.5 rounded border text-[10px] font-bold text-risk-high border-risk-high/40 bg-risk-high/10 flex items-center gap-1">
+                        <TriangleAlert size={10} strokeWidth={2} />
+                        WENT DARK
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-fg-dim">No vessel in the search radius</span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Main Console Workspace */}
-          <main className="flex-1 p-5 max-w-[1800px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
-            {/* Left: Map Workspace */}
-            <section className="lg:col-span-7 flex flex-col space-y-3.5">
-              <div className="flex-1 min-h-[460px] lg:min-h-[520px] rounded-2xl border border-slate-800 overflow-hidden relative shadow-2xl bg-slate-900">
+          {/* ── Workspace ───────────────────────────────────────────────────── */}
+          <main className="flex-1 max-w-[1800px] w-full mx-auto px-5 py-5 grid grid-cols-1 xl:grid-cols-12 gap-5">
+            {/* Map — centre stage */}
+            <section className="xl:col-span-8 flex flex-col gap-3">
+              <div className="flex-1 min-h-[520px] xl:min-h-[640px] rounded-lg border border-line overflow-hidden relative bg-ink-900">
                 <SpillMap
                   key={data.spill_id}
                   data={data}
@@ -276,16 +305,21 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
                 />
               </div>
 
-              {/* Timeline Slider */}
-              <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 backdrop-blur-sm space-y-2.5 shadow-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">INVESTIGATION TIMELINE:</span>
-                    <span className={`font-bold ${phaseColor}`}>{phase}</span>
+              {/* Timeline scrubber */}
+              <div className="rounded-lg border border-line bg-ink-900 px-4 py-3">
+                <div className="flex items-center justify-between gap-3 mb-2.5">
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <span className="text-[11px] font-semibold text-fg-muted uppercase tracking-wider">
+                      {phase}
+                    </span>
+                    <span className="font-mono text-lg font-bold text-accent tabular-nums">
+                      {hoursOffset > 0 ? "+" : ""}
+                      {hoursOffset.toFixed(1)}h
+                    </span>
                   </div>
-                  <div className="text-slate-300">
+                  <span className="text-[11px] font-mono text-fg-dim truncate">
                     {currentStep ? new Date(currentStep.timestamp).toUTCString() : ""}
-                  </div>
+                  </span>
                 </div>
 
                 <input
@@ -294,398 +328,278 @@ export default function Dashboard({ data: initialData, liveCaseId, notice }: Pro
                   max={allSteps.length - 1}
                   value={timelineIdx}
                   onChange={(e) => setTimelineIdx(Number(e.target.value))}
-                  className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-950 rounded-lg appearance-none"
+                  aria-label="Investigation timeline"
+                  className="w-full accent-[#f0b429] cursor-pointer h-1.5 bg-ink-800 rounded-full appearance-none"
                 />
 
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-0.5">
-                  <div className="text-left">
-                    <span className="text-red-400 font-bold block">-6h</span>
-                    <span>ESTIMATED ORIGIN</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-amber-400 font-bold block">0h (Observation)</span>
-                    <span>OBSERVED SPILL</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-emerald-400 font-bold block">+6h</span>
-                    <span>FORWARD DRIFT</span>
-                  </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-fg-dim mt-2">
+                  <span>−6h · reconstructed origin</span>
+                  <span className="text-accent">0h · observed</span>
+                  <span>+6h · forecast</span>
                 </div>
               </div>
             </section>
 
-            {/* Right: Strongest Lead & Evidence */}
-            <section className="lg:col-span-5 flex flex-col space-y-4">
-              <div className="p-5 rounded-2xl border-2 border-amber-500/70 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 shadow-2xl space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3.5">
-                  <div>
-                    <span className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-widest block">
-                      {isTopCandidate ? "★ STRONGEST INVESTIGATIVE LEAD" : "SELECTED CANDIDATE VESSEL"}
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-black text-white font-mono mt-1 tracking-tight">
-                      {selectedVessel.vessel_name}
-                    </h2>
-                    <span className="text-xs text-slate-400 font-mono">
-                      MMSI: {selectedVessel.vessel_id}
-                      {selectedVessel.vessel_type && <> · {selectedVessel.vessel_type}</>}
-                      {selectedVessel.flag && <> · {selectedVessel.flag} flag</>}
-                      {" "}· Min Distance: {selectedVessel.min_distance_km} km
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded border text-xs font-mono tracking-wider ${RISK_BADGE[selectedVessel.risk]}`}>
-                      {selectedVessel.risk} RISK
-                    </span>
-                    <div className="text-right">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold block">Attribution</span>
-                      <span className="text-3xl font-mono font-black text-amber-400">
-                        {selectedVessel.score.toFixed(1)} <span className="text-xs font-normal text-slate-400">/ 100</span>
+            {/* Evidence column */}
+            <section className="xl:col-span-4 flex flex-col gap-5">
+              {/* Selected vessel */}
+              <div className="rounded-lg border border-line bg-ink-900">
+                <div className="px-4 py-3.5 border-b border-line">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-dim flex items-center gap-1.5">
+                        {isTopCandidate ? (
+                          <>
+                            <Target size={11} strokeWidth={2} className="text-accent" />
+                            Strongest lead
+                          </>
+                        ) : (
+                          "Selected vessel"
+                        )}
+                      </span>
+                      <h2 className="text-xl font-bold text-fg mt-1 truncate">
+                        {selectedVessel.vessel_name}
+                      </h2>
+                      <p className="text-[11px] font-mono text-fg-dim mt-0.5 truncate">
+                        MMSI {selectedVessel.vessel_id}
+                        {selectedVessel.vessel_type && ` · ${selectedVessel.vessel_type}`}
+                        {selectedVessel.flag && ` · ${selectedVessel.flag}`}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-3xl font-black text-accent leading-none tabular-nums">
+                        {selectedVessel.score.toFixed(1)}
+                      </div>
+                      <div className="text-[10px] text-fg-dim font-mono mt-1">out of 100</div>
+                      <span
+                        className={`inline-block mt-1.5 px-1.5 py-0.5 rounded border text-[10px] font-bold ${RISK_TONE[selectedVessel.risk]}`}
+                      >
+                        {selectedVessel.risk}
                       </span>
                     </div>
                   </div>
+
+                  {selectedVessel.origin_band && (
+                    <p className="mt-2.5 text-[11px] font-mono text-fg-muted flex items-center gap-1.5">
+                      <Crosshair size={12} strokeWidth={1.75} className="text-fg-dim" />
+                      Closest approach falls inside the{" "}
+                      <span className="text-accent">{selectedVessel.origin_band}</span> origin band
+                    </p>
+                  )}
                 </div>
 
-                {/* Score Breakdown Bars */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-mono font-bold text-slate-300">
-                    <span>SCORE BREAKDOWN (MAX 100)</span>
-                    <span className="text-[10px] text-slate-500 font-normal">Weights: 35 | 20 | 30 | 15</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-400 font-semibold">📍 PROXIMITY</span>
-                        <span className="font-bold text-emerald-400">{selectedVessel.proximity_score} / 35</span>
+                {/* Four factors */}
+                <div className="px-4 py-3.5 border-b border-line space-y-3">
+                  {FACTORS.map((f) => {
+                    const value = selectedVessel[f.key];
+                    const pct = Math.min((value / f.max) * 100, 100);
+                    const Icon = f.icon;
+                    return (
+                      <div key={f.key}>
+                        <div className="flex items-center justify-between text-[11px] mb-1.5">
+                          <span className="flex items-center gap-1.5 text-fg-muted">
+                            <Icon size={12} strokeWidth={1.75} className="text-fg-dim" />
+                            {f.label}
+                          </span>
+                          <span className="font-mono text-fg tabular-nums">
+                            {value}
+                            <span className="text-fg-dim"> / {f.max}</span>
+                          </span>
+                        </div>
+                        <div className="h-1 rounded-full bg-ink-800 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-accent/80 transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] font-mono text-fg-dim mt-1">{f.note(selectedVessel)}</p>
                       </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div
-                          className="bg-emerald-400 h-full rounded-full transition-all"
-                          style={{ width: `${(selectedVessel.proximity_score / 35) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono block mt-1">
-                        {selectedVessel.min_distance_km} km from origin
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-400 font-semibold">🕐 TIMING</span>
-                        <span className="font-bold text-indigo-400">{selectedVessel.temporal_score} / 20</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div
-                          className="bg-indigo-400 h-full rounded-full transition-all"
-                          style={{ width: `${(selectedVessel.temporal_score / 20) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono block mt-1">
-                        {selectedVessel.time_difference_hours}h time offset
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-400 font-semibold">🛳 TRAJECTORY</span>
-                        <span className="font-bold text-amber-400">{selectedVessel.trajectory_score} / 30</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div
-                          className="bg-amber-400 h-full rounded-full transition-all"
-                          style={{ width: `${(selectedVessel.trajectory_score / 30) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono block mt-1">
-                        Corridor overlap match
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="text-slate-400 font-semibold">📡 BEHAVIOUR</span>
-                        <span className="font-bold text-orange-400">{selectedVessel.behavioral_score} / 15</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div
-                          className="bg-orange-400 h-full rounded-full transition-all"
-                          style={{ width: `${(selectedVessel.behavioral_score / 15) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono block mt-1">
-                        Speed &amp; transmission metrics
-                      </span>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
 
-                {/* Evidence Checklist */}
-                <div className="pt-2 border-t border-slate-800/80">
-                  <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider block mb-2">
-                    WHY {selectedVessel.vessel_name}? (MEASURED AIS EVIDENCE):
-                  </span>
-                  <div className="space-y-1.5 bg-slate-950/80 p-3 rounded-lg border border-slate-800">
-                    {selectedVessel.reasons.map((reason, rIdx) => (
-                      <div key={rIdx} className="text-xs text-slate-200 flex items-start gap-2">
-                        <span className="text-emerald-400 font-bold">✓</span>
-                        <span className="capitalize">{reason}</span>
+                {/* Evidence */}
+                <div className="px-4 py-3.5">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-dim mb-2.5">
+                    Why this vessel
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {selectedVessel.reasons.map((reason, i) => (
+                      <li key={i} className="text-[12px] text-fg-muted flex gap-2 leading-relaxed">
+                        <span className="text-ok mt-0.5 shrink-0" aria-hidden="true">
+                          —
+                        </span>
+                        <span className="first-letter:uppercase">{reason}</span>
+                      </li>
+                    ))}
+                    {selectedVessel.reasons.length === 0 && (
+                      <li className="text-[12px] text-fg-dim">No evidence recorded.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Ecological exposure */}
+              {exposure && (
+                <div className="rounded-lg border border-line bg-ink-900">
+                  <div className="px-4 py-3 border-b border-line flex items-center justify-between">
+                    <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-dim flex items-center gap-1.5">
+                      <Leaf size={12} strokeWidth={1.75} />
+                      Ecological exposure
+                    </h3>
+                    <span
+                      className={`text-[10px] font-bold font-mono ${
+                        exposure.response_priority === "CRITICAL_ACTION"
+                          ? "text-risk-high"
+                          : exposure.response_priority === "HIGH_PRIORITY"
+                          ? "text-risk-med"
+                          : "text-fg-muted"
+                      }`}
+                    >
+                      {exposure.response_priority.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <div className="px-4 py-3 grid grid-cols-3 gap-3 text-center border-b border-line">
+                    {[
+                      ["Sites screened", exposure.sites_analyzed],
+                      ["Direct threat", exposure.direct_threats_count],
+                      ["Near threat", exposure.near_threats_count],
+                    ].map(([label, value]) => (
+                      <div key={label as string}>
+                        <div className="font-mono text-xl font-bold text-fg tabular-nums">{value as number}</div>
+                        <div className="text-[10px] text-fg-dim mt-0.5">{label as string}</div>
                       </div>
                     ))}
                   </div>
-                </div>
-
-                {/* Analytical Disclaimer */}
-                <div className="p-3 rounded-lg border border-slate-800 bg-slate-950/60 text-[11px] text-slate-400 leading-relaxed">
-                  <span className="font-semibold text-slate-300">Analytical Disclaimer:</span> Vessel attribution is an analytical ranking based on spatial, temporal, trajectory, and behavioural correlation. It is not proof of responsibility.
-                </div>
-              </div>
-
-              {/* Ecological Exposure Panel (Phase 5E Part 3) */}
-              <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 font-bold">🌿</span>
-                    <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider">
-                      ECOLOGICAL EXPOSURE (RAMSAR GIS)
-                    </span>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                      data.ecological_exposure?.response_priority === "CRITICAL_ACTION" ||
-                      data.ecological_exposure?.response_priority === "HIGH_PRIORITY" ||
-                      data.ecology?.assessment.response_priority === "HIGH"
-                        ? "bg-rose-950 text-rose-300 border border-rose-700 font-bold"
-                        : "bg-emerald-950 text-emerald-300 border border-emerald-800"
-                    }`}
-                  >
-                    {data.ecological_exposure?.response_priority === "CRITICAL_ACTION"
-                      ? "🔴 DIRECT THREAT"
-                      : data.ecological_exposure?.response_priority === "HIGH_PRIORITY" ||
-                        data.ecology?.assessment.response_priority === "HIGH"
-                      ? "🟠 HIGH PRIORITY"
-                      : "🟢 LOW EXPOSURE"}
-                  </span>
-                </div>
-
-                {data.ecological_exposure && data.ecological_exposure.threats.length > 0 ? (
-                  (() => {
-                    const topRamsar = data.ecological_exposure.threats[0];
-                    const isCurrent = topRamsar.exposure_basis === "CURRENT_OBSERVATION";
-                    const isForecast = topRamsar.exposure_basis === "FORECAST_INTERSECTION";
-                    const isNear = topRamsar.exposure_basis === "PROXIMITY_ONLY" && topRamsar.threat_level === "NEAR_THREAT";
-
-                    const bannerTitle = isCurrent
-                      ? "⚠ PROTECTED AREA CURRENTLY INTERSECTED"
-                      : isForecast
-                      ? "⚠ FORECAST TRAJECTORY ENTERS PROTECTED AREA"
-                      : isNear
-                      ? "◐ WITHIN 10 KM OF PROTECTED AREA"
-                      : "✓ NO SIGNIFICANT RAMSAR EXPOSURE";
-
-                    const timingLabel = isCurrent
-                      ? "Observed Spill Overlap (t=0h)"
-                      : isForecast && topRamsar.estimated_time_to_impact_hours !== null && topRamsar.estimated_time_to_impact_hours !== undefined
-                      ? `+${topRamsar.estimated_time_to_impact_hours} hours`
-                      : `No Direct Entry (${topRamsar.minimum_distance_km} km)`;
-
-                    return (
-                      <div
-                        className={`p-3 rounded-lg border font-mono text-xs space-y-2 ${
-                          isCurrent || isForecast
-                            ? "bg-rose-950/40 border-rose-800/80"
-                            : isNear
-                            ? "bg-amber-950/30 border-amber-800/60"
-                            : "bg-slate-950/80 border-slate-800"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`font-bold text-[11px] ${
-                              isCurrent || isForecast ? "text-rose-400" : isNear ? "text-amber-400" : "text-emerald-400"
-                            }`}
-                          >
-                            {bannerTitle}
-                          </span>
-                          <span
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                              isCurrent || isForecast
-                                ? "bg-rose-900 text-rose-200 border border-rose-700"
-                                : isNear
-                                ? "bg-amber-900 text-amber-200 border border-amber-700"
-                                : "bg-emerald-900 text-emerald-200 border border-emerald-700"
-                            }`}
-                          >
-                            {isCurrent ? "CURRENT OVERLAP" : topRamsar.threat_level.replace(/_/g, " ")}
-                          </span>
-                        </div>
-
-                        <div className="text-white font-bold text-sm">{topRamsar.site_name}</div>
-                        <div className="text-[11px] text-slate-400">
-                          {topRamsar.state} · Official Ramsar Protected Wetland (
-                          {topRamsar.area_hectares ? `${topRamsar.area_hectares.toLocaleString()} ha` : "Surveyed Boundary"}
-                          )
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800 text-[11px]">
-                          <div>
-                            <span className="text-slate-400 block text-[10px]">Forecast Distance:</span>
-                            <strong className="text-amber-400">{topRamsar.minimum_distance_km} km</strong>
-                          </div>
-                          <div>
-                            <span className="text-slate-400 block text-[10px]">
-                              {isCurrent ? "Exposure Basis:" : "Est. First Contact:"}
-                            </span>
-                            <strong className="text-rose-400">{timingLabel}</strong>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-slate-300 bg-slate-950/60 p-2 rounded border border-slate-800">
-                          {topRamsar.reason}
-                        </div>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <div className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-800/60 text-xs font-mono text-emerald-300">
-                    🟢 NO SENSITIVE HABITAT EXPOSURE DETECTED
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      The current forecast trajectory remains outside the surveyed Ramsar polygons.
+                  {exposure.nearest_site && (
+                    <p className="px-4 py-2.5 text-[11px] text-fg-muted leading-relaxed">
+                      Nearest protected site{" "}
+                      <span className="text-fg font-medium">{exposure.nearest_site.site_name}</span> at{" "}
+                      <span className="font-mono">{exposure.nearest_site.minimum_distance_km} km</span>
+                      {exposure.nearest_site.estimated_time_to_impact_hours != null && (
+                        <> · first contact in <span className="font-mono">{exposure.nearest_site.estimated_time_to_impact_hours} h</span></>
+                      )}
                     </p>
-                  </div>
-                )}
-
-                <p className="text-[9px] text-slate-500 font-mono leading-tight">
-                  Ecological exposure is a spatial screening layer based on physical drift trajectory and surveyed Ramsar GIS polygons. Does not measure actual wildlife damage.
-                </p>
-              </div>
-
-              {/* Explainable Scoring Guide */}
-              <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/80 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFormulaDetails(!showFormulaDetails)}
-                  className="w-full flex items-center justify-between text-xs font-mono font-bold text-slate-300 hover:text-white cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-amber-400">⚖</span>
-                    <span>NOT A BLACK BOX — EXPLAINABLE SCORING SYSTEM</span>
-                  </span>
-                  <span className="text-slate-500 text-xs">
-                    {showFormulaDetails ? "Hide [-]" : "Show Details [+]"}
-                  </span>
-                </button>
-
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Score = Proximity (35) + Temporal (20) + Trajectory (30) + Behaviour (15) = 100 max.
-                </p>
-
-                {showFormulaDetails && (
-                  <div className="pt-2 border-t border-slate-800 space-y-1.5 text-[11px] text-slate-300 font-mono">
-                    <div>
-                      <strong className="text-emerald-400">• Proximity (35 max):</strong> Geodesic Haversine distance from AIS track point to the estimated origin coordinate.
-                    </div>
-                    <div>
-                      <strong className="text-indigo-400">• Temporal (20 max):</strong> Time difference between the vessel AIS timestamp and the estimated spill origin time window (±6h).
-                    </div>
-                    <div>
-                      <strong className="text-amber-400">• Trajectory (30 max):</strong> Whether the vessel transit corridor directly intersects the reconstructed hydrodynamic advection path.
-                    </div>
-                    <div>
-                      <strong className="text-orange-400">• Behaviour (15 max):</strong> Measured operational anomalies such as sudden speed drops (≥50%) or AIS dark periods (≥2h).
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </section>
 
-            {/* Bottom: Ranked Candidates Table */}
-            <section className="lg:col-span-12 space-y-2 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">
-                  ALL RANKED CANDIDATE VESSELS ({attribution.candidate_vessels.length})
-                </span>
-                <span className="text-[11px] text-slate-500 font-mono">
-                  Click row to inspect evidence &amp; highlight on map
-                </span>
-              </div>
+            {/* ── Ranked candidates ─────────────────────────────────────────── */}
+            <section className="xl:col-span-12">
+              <div className="rounded-lg border border-line bg-ink-900 overflow-hidden">
+                <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-3">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-dim flex items-center gap-1.5">
+                    <Signal size={12} strokeWidth={1.75} />
+                    Ranked candidates
+                    <span className="text-fg-dim/70 normal-case tracking-normal font-normal">
+                      · {attribution.candidate_vessels.length} vessels scored against the origin
+                    </span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowMethod((v) => !v)}
+                    className="text-[11px] text-fg-dim hover:text-fg-muted flex items-center gap-1 transition-colors"
+                  >
+                    Scoring method
+                    <ChevronDown
+                      size={12}
+                      className={`transition-transform ${showMethod ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                </div>
 
-              <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/90 shadow-xl">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="border-b border-slate-800 bg-slate-950 text-slate-400">
-                    <tr>
-                      <th className="py-2.5 px-4">#</th>
-                      <th className="py-2.5 px-4">Vessel Name</th>
-                      <th className="py-2.5 px-4">MMSI</th>
-                      <th className="py-2.5 px-4">Min Dist</th>
-                      <th className="py-2.5 px-4">Time Offset</th>
-                      <th className="py-2.5 px-4">Score Breakdown (Prox / Temp / Traj / Beh)</th>
-                      <th className="py-2.5 px-4">Total Score</th>
-                      <th className="py-2.5 px-4">Risk</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                    {attribution.candidate_vessels.map((vessel: CandidateVessel, idx: number) => {
-                      const isSelected = selectedVessel.vessel_id === vessel.vessel_id;
-                      return (
-                        <tr
-                          key={vessel.vessel_id}
-                          onClick={() => setSelectedVesselId(vessel.vessel_id)}
-                          className={`cursor-pointer transition-colors ${
-                            isSelected
-                              ? "bg-amber-500/15 font-semibold text-white"
-                              : "hover:bg-slate-800/50"
-                          }`}
-                        >
-                          <td className="py-2.5 px-4 text-slate-500">{idx + 1}</td>
-                          <td className="py-2.5 px-4 text-white font-medium flex items-center gap-1.5">
-                            {idx === 0 && <span className="text-amber-400">★</span>}
-                            <span>{vessel.vessel_name}</span>
-                            {vessel.went_dark && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-red-950 text-red-300 border border-red-700">
-                                ⚠ DARK
+                {showMethod && (
+                  <div className="px-4 py-3 border-b border-line bg-ink-850 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {FACTORS.map((f) => (
+                      <div key={f.key}>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-fg-muted">
+                          <f.icon size={12} strokeWidth={1.75} className="text-fg-dim" />
+                          {f.label}
+                          <span className="font-mono text-fg-dim">/{f.max}</span>
+                        </div>
+                        <p className="text-[10px] text-fg-dim mt-1 leading-relaxed">
+                          {f.key === "proximity_score" && "How close the track passed to the reconstructed origin."}
+                          {f.key === "temporal_score" && "How near in time the closest approach was to the discharge."}
+                          {f.key === "trajectory_score" && "Whether the course crosses the origin corridor."}
+                          {f.key === "behavioral_score" && "Speed drops near the window, and anomalous AIS silence."}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[12px]">
+                    <thead className="text-[10px] uppercase tracking-wider text-fg-dim border-b border-line">
+                      <tr>
+                        <th className="py-2 px-4 font-medium w-10">#</th>
+                        <th className="py-2 px-4 font-medium">Vessel</th>
+                        <th className="py-2 px-4 font-medium">MMSI</th>
+                        <th className="py-2 px-4 font-medium hidden md:table-cell">Type</th>
+                        <th className="py-2 px-4 font-medium text-right">Distance</th>
+                        <th className="py-2 px-4 font-medium text-right hidden sm:table-cell">Δt</th>
+                        <th className="py-2 px-4 font-medium text-right">Score</th>
+                        <th className="py-2 px-4 font-medium">Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attribution.candidate_vessels.map((vessel, idx) => {
+                        const isSelected = selectedVessel.vessel_id === vessel.vessel_id;
+                        return (
+                          <tr
+                            key={vessel.vessel_id}
+                            onClick={() => setSelectedVesselId(vessel.vessel_id)}
+                            className={`cursor-pointer border-b border-line/60 last:border-0 transition-colors ${
+                              isSelected ? "bg-accent/[0.07]" : "hover:bg-ink-850"
+                            }`}
+                          >
+                            <td className="py-2 px-4 font-mono text-fg-dim tabular-nums">{idx + 1}</td>
+                            <td className="py-2 px-4">
+                              <span className={`font-medium ${isSelected ? "text-accent" : "text-fg"}`}>
+                                {vessel.vessel_name}
                               </span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-4 text-slate-400">{vessel.vessel_id}</td>
-                          <td className="py-2.5 px-4">{vessel.min_distance_km} km</td>
-                          <td className="py-2.5 px-4">{vessel.time_difference_hours}h</td>
-                          <td className="py-2.5 px-4 text-slate-400">
-                            <span className="text-emerald-400 font-bold">{vessel.proximity_score}</span> /{" "}
-                            <span className="text-indigo-400 font-bold">{vessel.temporal_score}</span> /{" "}
-                            <span className="text-amber-400 font-bold">{vessel.trajectory_score}</span> /{" "}
-                            <span className="text-orange-400 font-bold">{vessel.behavioral_score}</span>
-                          </td>
-                          <td className="py-2.5 px-4 font-bold text-amber-400 text-sm">
-                            {vessel.score.toFixed(1)}
-                          </td>
-                          <td className="py-2.5 px-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] ${RISK_BADGE[vessel.risk]}`}>
-                              {vessel.risk}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                              {vessel.went_dark && (
+                                <span className="ml-2 px-1.5 py-0.5 rounded border text-[9px] font-bold text-risk-high border-risk-high/40 bg-risk-high/10 inline-flex items-center gap-1 align-middle">
+                                  <TriangleAlert size={9} strokeWidth={2} />
+                                  DARK
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 px-4 font-mono text-fg-dim tabular-nums">{vessel.vessel_id}</td>
+                            <td className="py-2 px-4 text-fg-dim hidden md:table-cell">{vessel.vessel_type ?? "—"}</td>
+                            <td className="py-2 px-4 font-mono text-fg-muted text-right tabular-nums">
+                              {vessel.min_distance_km} km
+                            </td>
+                            <td className="py-2 px-4 font-mono text-fg-muted text-right tabular-nums hidden sm:table-cell">
+                              {vessel.time_difference_hours} h
+                            </td>
+                            <td className="py-2 px-4 font-mono font-bold text-right tabular-nums text-fg">
+                              {vessel.score.toFixed(1)}
+                            </td>
+                            <td className="py-2 px-4">
+                              <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${RISK_TONE[vessel.risk]}`}>
+                                {vessel.risk}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className="px-4 py-2.5 border-t border-line text-[10px] text-fg-dim flex items-center gap-1.5">
+                  <Radio size={11} strokeWidth={1.75} />
+                  Analytical ranking to prioritise investigation — not proof of responsibility.
+                </p>
               </div>
             </section>
           </main>
-        </div>
+        </>
       )}
 
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="flex-none border-t border-slate-800/80 bg-slate-950 py-3 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-mono">
-          <span>SlickTrace AI v1.0</span>
-          <span>·</span>
-          <span>Investigation Experience &amp; Dynamic Attribution Console</span>
-        </div>
-        <div className="text-[11px] text-slate-600">
-          Hydrodynamic Lagrangian Hindcasting + AIS Spatial-Temporal Correlation Engine
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

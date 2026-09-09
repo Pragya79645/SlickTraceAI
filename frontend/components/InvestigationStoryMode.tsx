@@ -4,6 +4,22 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { InvestigationResponse, CandidateVessel, DemoCase } from "@/lib/api";
 import { DEMO_CASES, nextDemoCase } from "@/lib/api";
+import {
+  Check,
+  Clock,
+  Gauge,
+  LayoutGrid,
+  Leaf,
+  MapPin,
+  Pause,
+  Play,
+  Route,
+  Search,
+  Ship,
+  TriangleAlert,
+  X,
+  Zap,
+} from "lucide-react";
 import ModelMetricsPanel from "@/components/ModelMetricsPanel";
 import DossierButton from "@/components/DossierButton";
 
@@ -134,7 +150,7 @@ export default function InvestigationStoryMode({
                       : "bg-slate-950 text-slate-500 border border-slate-800 hover:text-slate-300"
                   }`}
                 >
-                  <span>{isPast ? "✓" : stg.id}</span>
+                  <span>{isPast ? <Check size={11} strokeWidth={3} /> : stg.id}</span>
                   <span>{stg.short}</span>
                 </button>
               );
@@ -148,7 +164,7 @@ export default function InvestigationStoryMode({
               onClick={() => setIsPlaying(!isPlaying)}
               className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <span>{isPlaying ? "⏸ PAUSE" : "▶ PLAY AUTO-STORY"}</span>
+              <span className="flex items-center gap-1.5">{isPlaying ? <><Pause size={12} strokeWidth={2} />PAUSE</> : <><Play size={12} strokeWidth={2} />PLAY AUTO-STORY</>}</span>
             </button>
 
             <button
@@ -164,7 +180,7 @@ export default function InvestigationStoryMode({
                 }[nextCase.accent]
               }`}
             >
-              <span>⚡</span>
+              <Zap size={12} strokeWidth={2} />
               <span>Next: {nextCase.label}</span>
             </button>
             {cases.length > 1 && (
@@ -193,7 +209,7 @@ export default function InvestigationStoryMode({
               onClick={onOpenConsole}
               className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <span>📊 Full Console</span>
+              <span className="flex items-center gap-1.5"><LayoutGrid size={12} strokeWidth={1.75} />Full Console</span>
             </button>
           </div>
         </div>
@@ -327,7 +343,7 @@ export default function InvestigationStoryMode({
                 </div>
 
                 <div className="p-3 rounded-lg bg-indigo-950/40 border border-indigo-800/60 text-xs text-indigo-300 leading-relaxed">
-                  💡 <strong>Key Investigative Question:</strong> The slick is detected, but where did it originate hours before?
+                  <strong>Key investigative question:</strong> The slick is detected, but where did it originate hours before?
                 </div>
               </div>
             )}
@@ -418,7 +434,7 @@ export default function InvestigationStoryMode({
                 <div className="p-4 rounded-xl bg-gradient-to-b from-red-950/40 to-slate-950 border-2 border-red-600/70 shadow-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono font-bold text-red-400 uppercase tracking-widest">
-                      🔴 RECONSTRUCTED SPILL ORIGIN CORRIDOR
+                      RECONSTRUCTED SPILL ORIGIN CORRIDOR
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
                       ~{drift.hindcast.estimated_origin.hours_before_observation}h Earlier
@@ -442,7 +458,7 @@ export default function InvestigationStoryMode({
                     <div className="p-3.5 rounded-xl bg-slate-950 border border-red-900/60 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-mono font-bold text-red-300 uppercase tracking-widest">
-                          ◎ Origin Uncertainty — Monte Carlo Ensemble
+                          Origin uncertainty — Monte Carlo ensemble
                         </span>
                         <span className="text-[10px] font-mono text-slate-500">
                           {drift.ensemble.n_particles} particles · seed {drift.ensemble.seed}
@@ -544,7 +560,7 @@ export default function InvestigationStoryMode({
                           <span className="text-amber-400 font-bold">#{i + 1}</span>
                           <span className="text-white font-medium">{v.vessel_name}</span>
                           {v.went_dark && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-red-950 text-red-300 border border-red-700">⚠ DARK</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-red-950 text-red-300 border border-red-700">DARK</span>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
@@ -583,7 +599,7 @@ export default function InvestigationStoryMode({
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-400 font-semibold">📍 PROXIMITY</span>
+                      <span className="text-slate-400 font-semibold flex items-center gap-1.5"><MapPin size={11} strokeWidth={1.75} />PROXIMITY</span>
                       <span className="font-bold text-emerald-400">{selectedVessel.proximity_score} / 35</span>
                     </div>
                     <span className="text-[10px] text-slate-500 font-mono block mt-1">
@@ -593,7 +609,7 @@ export default function InvestigationStoryMode({
 
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-400 font-semibold">🕐 TIMING</span>
+                      <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Clock size={11} strokeWidth={1.75} />TIMING</span>
                       <span className="font-bold text-indigo-400">{selectedVessel.temporal_score} / 20</span>
                     </div>
                     <span className="text-[10px] text-slate-500 font-mono block mt-1">
@@ -603,7 +619,7 @@ export default function InvestigationStoryMode({
 
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-400 font-semibold">🛳 TRAJECTORY</span>
+                      <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Route size={11} strokeWidth={1.75} />TRAJECTORY</span>
                       <span className="font-bold text-amber-400">{selectedVessel.trajectory_score} / 30</span>
                     </div>
                     <span className="text-[10px] text-slate-500 font-mono block mt-1">
@@ -613,7 +629,7 @@ export default function InvestigationStoryMode({
 
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800">
                     <div className="flex justify-between text-xs font-mono">
-                      <span className="text-slate-400 font-semibold">📡 BEHAVIOUR</span>
+                      <span className="text-slate-400 font-semibold flex items-center gap-1.5"><Gauge size={11} strokeWidth={1.75} />BEHAVIOUR</span>
                       <span className="font-bold text-orange-400">{selectedVessel.behavioral_score} / 15</span>
                     </div>
                     <span className="text-[10px] text-slate-500 font-mono block mt-1">
@@ -636,7 +652,7 @@ export default function InvestigationStoryMode({
               <div className="space-y-4 animate-in fade-in duration-300">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="px-2.5 py-1 rounded text-xs font-mono font-bold bg-red-950 text-red-300 border border-red-700 uppercase tracking-wider">
-                    ★ STAGE 06 OF 07: ATTRIBUTION
+                    STAGE 06 OF 07: ATTRIBUTION
                   </span>
                   <span className="text-xs font-mono text-emerald-400 font-bold">
                     EVIDENCE RANKED
@@ -650,7 +666,7 @@ export default function InvestigationStoryMode({
                   </span>
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-3xl font-black text-white font-mono tracking-tight">
-                      🚢 {topCandidate.vessel_name}
+                      <Ship size={20} strokeWidth={1.75} className="inline mr-2 -mt-1" />{topCandidate.vessel_name}
                     </h3>
                     <span className={`px-3 py-1 rounded border text-xs font-mono tracking-wider ${RISK_BADGE[topCandidate.risk]}`}>
                       {topCandidate.risk} RISK
@@ -673,7 +689,7 @@ export default function InvestigationStoryMode({
                     </span>
                     {topCandidate.reasons.map((r, idx) => (
                       <div key={idx} className="text-xs text-slate-200 flex items-start gap-2 font-mono">
-                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span className="text-emerald-400 shrink-0 mt-0.5">—</span>
                         <span className="capitalize">{r}</span>
                       </div>
                     ))}
@@ -681,7 +697,7 @@ export default function InvestigationStoryMode({
                 </div>
 
                 <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-center text-slate-400">
-                  SATELLITE ──► PHYSICS ──► AIS ──► EVIDENCE ──► <strong className="text-amber-300">ATTRIBUTION</strong>
+                  SATELLITE → PHYSICS → AIS → EVIDENCE → <strong className="text-amber-300">ATTRIBUTION</strong>
                 </div>
               </div>
             )}
@@ -698,13 +714,13 @@ export default function InvestigationStoryMode({
                       ? "bg-rose-950 text-rose-300 border border-rose-700"
                       : "bg-emerald-950 text-emerald-300 border border-emerald-700"
                   }`}>
-                    {ecology?.assessment.response_priority === "HIGH" ? "🔴 HIGH PRIORITY ACTION" : "🟢 LOW EXPOSURE"}
+                    {ecology?.assessment.response_priority === "HIGH" ? "HIGH PRIORITY ACTION" : "LOW EXPOSURE"}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-2xl font-black text-white font-mono flex items-center gap-2">
-                    <span>🐢 ECOLOGICAL IMPACT ASSESSMENT</span>
+                    <span className="flex items-center gap-1.5"><Leaf size={12} strokeWidth={1.75} />ECOLOGICAL IMPACT ASSESSMENT</span>
                   </h3>
                   <p className="text-sm text-slate-300 mt-1.5 leading-relaxed">
                     Forward hydrodynamic drift trajectory screened against sensitive Marine Protected Areas and coastal breeding reserves.
@@ -720,12 +736,12 @@ export default function InvestigationStoryMode({
                     const isNear = topRamsar.exposure_basis === "PROXIMITY_ONLY" && topRamsar.threat_level === "NEAR_THREAT";
 
                     const bannerTitle = isCurrent
-                      ? "⚠ PROTECTED AREA CURRENTLY INTERSECTED"
+                      ? "PROTECTED AREA CURRENTLY INTERSECTED"
                       : isForecast
-                      ? "⚠ FORECAST TRAJECTORY ENTERS PROTECTED AREA"
+                      ? "FORECAST TRAJECTORY ENTERS PROTECTED AREA"
                       : isNear
-                      ? "◐ WITHIN 10 KM OF PROTECTED AREA"
-                      : "✓ NO SIGNIFICANT RAMSAR EXPOSURE";
+                      ? "WITHIN 10 KM OF PROTECTED AREA"
+                      : "NO SIGNIFICANT RAMSAR EXPOSURE";
 
                     const timingLabel = isCurrent
                       ? "Observed Spill Overlap (t=0h)"
@@ -814,7 +830,7 @@ export default function InvestigationStoryMode({
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                        <span>⚠ POTENTIAL ECOLOGICAL THREAT</span>
+                        <span className="flex items-center gap-1.5"><TriangleAlert size={12} strokeWidth={2} />POTENTIAL ECOLOGICAL THREAT</span>
                       </span>
                       <span className="text-xs font-bold px-2 py-0.5 rounded bg-rose-900 text-rose-200 border border-rose-700">
                         HIGH THREAT
@@ -841,7 +857,7 @@ export default function InvestigationStoryMode({
                   </div>
                 ) : (
                   <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-xs font-mono text-emerald-300 space-y-1">
-                    <span className="font-bold block">🟢 NO SENSITIVE HABITAT EXPOSURE DETECTED</span>
+                    <span className="font-bold block">NO SENSITIVE HABITAT EXPOSURE DETECTED</span>
                     <span className="text-slate-400">
                       The current forecast trajectory remains outside the prototype screening radii of all evaluated habitats.
                     </span>
@@ -884,7 +900,7 @@ export default function InvestigationStoryMode({
                     onClick={() => setShowHowWeGotHere(true)}
                     className="flex-1 px-3 py-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer text-center"
                   >
-                    🔍 HOW DID WE GET HERE?
+                    HOW DID WE GET HERE?
                   </button>
 
                   <button
@@ -892,7 +908,7 @@ export default function InvestigationStoryMode({
                     onClick={onOpenConsole}
                     className="flex-1 px-3 py-2.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-md shadow-amber-500/20 cursor-pointer text-center"
                   >
-                    📊 FULL CONSOLE →
+                    FULL CONSOLE →
                   </button>
                 </div>
               </div>
@@ -941,7 +957,7 @@ export default function InvestigationStoryMode({
           <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto relative z-[10000]">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-amber-400 text-lg">🔍</span>
+                <Search size={16} strokeWidth={2} className="text-amber-400" />
                 <h4 className="text-lg font-bold font-mono text-white">
                   HOW DID WE GET HERE? (CAUSAL CHAIN OF CUSTODY)
                 </h4>
@@ -951,7 +967,7 @@ export default function InvestigationStoryMode({
                 onClick={() => setShowHowWeGotHere(false)}
                 className="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 rounded bg-slate-800"
               >
-                ✕ Close
+                <X size={11} strokeWidth={2.5} className="inline mr-1" />Close
               </button>
             </div>
 

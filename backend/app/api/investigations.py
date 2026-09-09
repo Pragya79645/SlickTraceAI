@@ -1,6 +1,10 @@
-from typing import Any, Dict, Optional
+import asyncio
+import json
+import threading
+from typing import Any, AsyncIterator, Dict, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 
 from app.schemas.investigation import (
     AISCorrelationRequest,
@@ -18,7 +22,12 @@ from app.schemas.investigation import (
 from app.services.ais_service import correlate_vessels
 from app.services.drift_service import compute_drift
 from app.services.ecology_service import assess_ecological_threat
-from app.services.inference_service import attach_live_results, is_live_id, run_sar_inference
+from app.services.inference_service import (
+    Telemetry,
+    attach_live_results,
+    is_live_id,
+    run_sar_inference,
+)
 from app.services.investigation_service import get_investigation
 
 router = APIRouter(prefix="/api/investigations", tags=["investigations"])
@@ -103,6 +112,119 @@ async def analyze_sar_image_endpoint(
             status_code=500,
             detail=f"Inference execution failed: {exc}",
         ) from exc
+
+
+def _validate_upload(filename: Optional[str], content: bytes) -> None:
+    """Shared guardrails for both the buffered and streaming analyze endpoints."""
+    if not filename:
+        raise HTTPException(status_code=400, detail="No filename provided.")
+
+    lowered = filename.lower()
+    if not any(lowered.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{filename}'. Allowed formats: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty (0 bytes).")
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File exceeds maximum allowed size of {MAX_UPLOAD_SIZE // (1024 * 1024)} MB.",
+        )
+
+
+def _validate_anchor(latitude: Optional[float], longitude: Optional[float]) -> None:
+    if latitude is not None and not (-90.0 <= latitude <= 90.0):
+        raise HTTPException(status_code=400, detail=f"Latitude out of bounds [-90, 90]: {latitude}")
+    if longitude is not None and not (-180.0 <= longitude <= 180.0):
+        raise HTTPException(status_code=400, detail=f"Longitude out of bounds [-180, 180]: {longitude}")
+    if (latitude is None) != (longitude is None):
+        raise HTTPException(
+            status_code=400,
+            detail="Scene anchor requires both 'latitude' and 'longitude', or neither.",
+        )
+
+
+@router.post(
+    "/analyze/stream",
+    summary="Analyze a scene, streaming real pipeline telemetry as Server-Sent Events",
+)
+async def analyze_sar_image_stream_endpoint(
+    file: UploadFile = File(..., description="SAR or EO satellite image file (PNG/JPG/TIFF)"),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    timestamp: Optional[str] = Form(None),
+    appearance_code: str = Form("3"),
+) -> StreamingResponse:
+    """
+    Same pipeline as `POST /analyze`, but the response is an SSE stream so a client can
+    watch the investigation execute instead of waiting on a spinner.
+
+    Events are JSON objects on `data:` lines:
+
+    - `{"type": "stage", key, label, message, elapsed_ms, detail?, progress?, level?}`
+      emitted at each real milestone, timed server-side. Values are read back off the
+      objects each stage produced — CRS from the raster, current vectors from the
+      environment service, vessel name from the attribution result.
+    - `{"type": "result", "data": AnalysisResponse}` once, on success.
+    - `{"type": "error", "message": ...}` if the pipeline raised.
+    """
+    try:
+        content = await file.read()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to read uploaded file: {exc}") from exc
+
+    _validate_upload(file.filename, content)
+    _validate_anchor(latitude, longitude)
+    filename = file.filename or "scene"
+
+    queue: "asyncio.Queue[Optional[Dict[str, Any]]]" = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def emit(event: Dict[str, Any]) -> None:
+        loop.call_soon_threadsafe(queue.put_nowait, event)
+
+    def work() -> None:
+        # Inference is blocking and CPU-bound, so it runs off the event loop and
+        # reports back through the queue.
+        try:
+            result = run_sar_inference(
+                image_bytes=content,
+                filename=filename,
+                latitude=latitude,
+                longitude=longitude,
+                timestamp=timestamp,
+                appearance_code=appearance_code,
+                tel=Telemetry(emit),
+            )
+            emit({"type": "result", "data": result.model_dump()})
+        except ValueError as exc:
+            emit({"type": "error", "message": str(exc)})
+        except Exception as exc:
+            emit({"type": "error", "message": f"{type(exc).__name__}: {exc}"})
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    threading.Thread(target=work, daemon=True, name=f"analyze-{filename}").start()
+
+    async def event_stream() -> AsyncIterator[str]:
+        yield 'data: {"type":"open"}\n\n'
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            yield f"data: {json.dumps(event, default=str)}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",   # stop nginx-style proxies buffering the stream
+        },
+    )
 
 
 @router.post(

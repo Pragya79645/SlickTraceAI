@@ -12,10 +12,11 @@ from __future__ import annotations
 import base64
 import json
 import math
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -184,6 +185,39 @@ def get_live_investigation(spill_id: str) -> Optional[AnalysisResponse]:
     return None
 
 
+# ─── Live telemetry ───────────────────────────────────────────────────────────
+
+class Telemetry:
+    """
+    Emits real pipeline milestones as they happen, with wall-clock timings measured
+    server-side. Every value reported here is read back off the object the stage just
+    produced — nothing is scripted or padded. With no sink attached it is a no-op, so
+    the non-streaming code path is unaffected.
+    """
+
+    def __init__(self, sink: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
+        self._sink = sink
+        self._t0 = time.perf_counter()
+
+    @property
+    def elapsed_ms(self) -> float:
+        return round((time.perf_counter() - self._t0) * 1000.0, 1)
+
+    def stage(self, key: str, label: str, message: str, **extra: Any) -> None:
+        if self._sink is None:
+            return
+        self._sink(
+            {
+                "type": "stage",
+                "key": key,
+                "label": label,
+                "message": message,
+                "elapsed_ms": self.elapsed_ms,
+                **extra,
+            }
+        )
+
+
 # ─── Downstream Chain (Phases 2–4) ────────────────────────────────────────────
 
 def _run_downstream_chain(
@@ -192,6 +226,7 @@ def _run_downstream_chain(
     longitude: float,
     timestamp: str,
     coordinate_source: str,
+    tel: Optional[Telemetry] = None,
 ) -> Tuple[DriftAnalysis, VesselAttribution, EcologicalAssessment, EcologicalExposureResponse]:
     """
     Runs Phase 2 (drift) → Phase 3 (AIS attribution) → Phase 4 (ecological screening)
@@ -205,6 +240,8 @@ def _run_downstream_chain(
     from app.services.ecological_service import assess_trajectory_exposure
     from app.services.ecology_service import assess_ecological_threat
 
+    tel = tel or Telemetry()
+
     drift = compute_drift(
         spill_id=spill_id,
         latitude=latitude,
@@ -213,17 +250,73 @@ def _run_downstream_chain(
         coordinate_source=coordinate_source,
     )
 
+    env = drift.environment
+    tel.stage(
+        "environment",
+        "OCEAN FORCING",
+        f"{env.provider_detail or env.source}: current u={env.current.u_ms:+.3f} v={env.current.v_ms:+.3f} m/s, "
+        f"wind u={env.wind.u_ms:+.2f} v={env.wind.v_ms:+.2f} m/s"
+        + (f", valid {env.valid_time[:16].replace('T', ' ')}Z" if env.valid_time else ""),
+        detail=env.quality,
+    )
+
     origin = drift.hindcast.estimated_origin
+    ens = drift.ensemble
+    band80 = (
+        next((e for e in ens.hindcast_steps[-1].ellipses if e.confidence == 0.80), None) if ens else None
+    )
+    tel.stage(
+        "drift",
+        "LAGRANGIAN DRIFT",
+        f"{ens.n_particles if ens else 0}-particle ensemble advected back "
+        f"{drift.hindcast.duration_hours} h → origin {origin.lat:.5f}°N {origin.lon:.5f}°E"
+        + (f" · 80% band {band80.area_km2} km²" if band80 else ""),
+        detail=drift.method.formula,
+    )
+
     attribution = correlate_vessels(
         spill_id=spill_id,
         origin_lat=origin.lat,
         origin_lon=origin.lon,
         origin_timestamp=origin.timestamp,
-        origin_ellipses=drift.ensemble.hindcast_steps[-1].ellipses if drift.ensemble else None,
+        origin_ellipses=ens.hindcast_steps[-1].ellipses if ens else None,
+    )
+
+    top = attribution.candidate_vessels[0] if attribution.candidate_vessels else None
+    dark = sum(1 for c in attribution.candidate_vessels if c.went_dark)
+    tel.stage(
+        "ais",
+        "AIS ATTRIBUTION",
+        f"{len(attribution.candidate_vessels)} vessel track(s) scored on the 4-factor matrix"
+        + (f" · {dark} with transponder silence spanning the discharge window" if dark else ""),
+        detail=f"weights {attribution.method.proximity_weight}/{attribution.method.temporal_weight}/"
+        f"{attribution.method.trajectory_weight}/{attribution.method.behavioral_weight}",
     )
 
     ecology = assess_ecological_threat(drift.forecast.trajectory)
     exposure = assess_trajectory_exposure(drift.forecast.trajectory)
+    tel.stage(
+        "ecology",
+        "ECOLOGICAL SCREEN",
+        f"{exposure.sites_analyzed} Ramsar polygons intersected · "
+        f"{exposure.direct_threats_count} direct / {exposure.near_threats_count} near threat"
+        + (
+            f" · nearest {exposure.nearest_site.site_name} at {exposure.nearest_site.minimum_distance_km} km"
+            if exposure.nearest_site
+            else ""
+        ),
+        detail=f"response priority {exposure.response_priority}",
+    )
+
+    if top is not None:
+        tel.stage(
+            "suspect",
+            "PRIMARY SUSPECT",
+            f"{top.vessel_name} · MMSI {top.vessel_id}"
+            + (f" · {top.flag}" if top.flag else "")
+            + f" · score {top.score}/100 ({top.risk} risk)",
+            detail=top.reasons[0] if top.reasons else None,
+        )
 
     return drift, attribution, ecology, exposure
 
@@ -456,7 +549,11 @@ def _tile_windows(width: int, height: int) -> List[Tuple[int, int]]:
 
 
 def segment_scene(
-    model: YOLO, img: np.ndarray, confidence_threshold: float, physical_gray: Optional[np.ndarray] = None
+    model: YOLO,
+    img: np.ndarray,
+    confidence_threshold: float,
+    physical_gray: Optional[np.ndarray] = None,
+    tel: Optional["Telemetry"] = None,
 ) -> Tuple[np.ndarray, np.ndarray, str]:
     """
     Runs the segmentation model over the whole frame and returns
@@ -477,6 +574,12 @@ def segment_scene(
     conf = max(confidence_threshold, TILE_CONF_FLOOR)
     gray = physical_gray if physical_gray is not None else cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     kept = rejected = 0
+    if tel is not None:
+        tel.stage(
+            "tiles",
+            "TILED INFERENCE",
+            f"{len(windows)} overlapping {TILE_SIZE}px tiles ({TILE_OVERLAP}px overlap) queued at conf ≥ {conf:.2f}",
+        )
     for start in range(0, len(windows), TILE_BATCH):
         batch = windows[start:start + TILE_BATCH]
         crops = [np.ascontiguousarray(img[y:y + TILE_SIZE, x:x + TILE_SIZE]) for x, y in batch]
@@ -485,6 +588,15 @@ def segment_scene(
             k, rj = _rasterise_result(res, mask, conf_map, x, y, gray_tile=gray[y:y + TILE_SIZE, x:x + TILE_SIZE])
             kept += k
             rejected += rj
+        if tel is not None:
+            done = min(start + TILE_BATCH, len(windows))
+            tel.stage(
+                "tiles_progress",
+                "TILED INFERENCE",
+                f"tile {done}/{len(windows)} · {kept} candidate mask(s) kept, {rejected} rejected by the dark-spot gate",
+                progress=round(done / len(windows), 3),
+                replaces="tiles_progress",
+            )
 
     return mask, conf_map, (
         f"tiled_{TILE_SIZE}px_{len(windows)}_tiles_conf{conf:.2f}"
@@ -580,6 +692,7 @@ def run_sar_inference(
     timestamp: Optional[str] = None,
     coordinate_source: str = "scene_georeference_anchor",
     appearance_code: str = "3",
+    tel: Optional[Telemetry] = None,
 ) -> AnalysisResponse:
     """
     Executes real YOLOv8 segmentation on the uploaded image bytes.
@@ -591,6 +704,8 @@ def run_sar_inference(
     With an anchor, Phases 2–4 (drift, AIS attribution, ecological exposure) run in the
     same request. Without one, those phases report the specific inputs they are missing.
     """
+    tel = tel or Telemetry()
+
     # 1. Decode — GeoTIFFs go through rasterio (georeference, SAR stretch, decimation);
     #    everything else through OpenCV.
     raster_georef: Optional[_RasterGeoref] = None
@@ -605,6 +720,28 @@ def run_sar_inference(
         display_img = cv2.cvtColor(physical_gray, cv2.COLOR_GRAY2BGR)  # previews show the real SAR look
         raster_georef = scene.georef
         polarity = scene.polarity
+
+        if raster_georef is not None:
+            tel.stage(
+                "io",
+                "SATELLITE I/O",
+                f"GeoTIFF parsed via rasterio · {raster_georef.crs} · "
+                f"{raster_georef.width}×{raster_georef.height} px at {raster_georef.gsd_m} m/px",
+                detail=(
+                    f"acquisition {raster_georef.timestamp[:19].replace('T', ' ')}Z from {raster_georef.timestamp_source}"
+                    if raster_georef.timestamp
+                    else "no acquisition time in metadata"
+                ),
+            )
+        else:
+            tel.stage("io", "SATELLITE I/O", f"TIFF decoded ({len(image_bytes) / 1e6:.1f} MB) — no CRS embedded")
+
+        tel.stage(
+            "filter",
+            "RADAR FILTER",
+            f"Lee speckle filter (7×7) + percentile stretch, then dark-spot enhancement for the model",
+            detail=f"polarity {polarity} · decimated 1/{raster_georef.inference_scale:.2f}" if raster_georef else polarity,
+        )
     else:
         np_arr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
@@ -612,6 +749,12 @@ def run_sar_inference(
             raise ValueError("Could not decode image bytes. Please ensure the file is a valid PNG, JPEG, or GeoTIFF.")
         physical_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         display_img = img
+        tel.stage(
+            "io",
+            "SATELLITE I/O",
+            f"{filename} decoded ({len(image_bytes) / 1e6:.2f} MB) — no embedded georeference",
+            detail="scene anchor must be supplied manually",
+        )
 
     height, width = img.shape[:2]
     if raster_georef is not None:
@@ -625,7 +768,13 @@ def run_sar_inference(
     # 2. Run the YOLOv8-seg model — one pass for small frames, overlapping tiles for
     #    whole scenes — and merge everything into one instance list.
     model = get_yolo_model()
-    scene_mask, conf_map, strategy = segment_scene(model, img, confidence_threshold, physical_gray)
+    tel.stage(
+        "model",
+        "NEURAL ENGINE",
+        f"YOLOv8n-seg weights resident · running forward pass over a {width}×{height} px frame",
+        detail=f"confidence floor {confidence_threshold}",
+    )
+    scene_mask, conf_map, strategy = segment_scene(model, img, confidence_threshold, physical_gray, tel)
     strategy += f"_polarity_{polarity}"
     # Tiled scenes were gated per instance inside segment_scene; here damping is measured
     # on the merged shapes for reporting only — always against the true radiometry.
@@ -705,6 +854,28 @@ def run_sar_inference(
     detections.sort(key=lambda d: d.area.km2, reverse=True)
     primary_detection = detections[0] if detections else None
 
+    if primary_detection is not None:
+        bv = primary_detection.bonn_volume
+        tel.stage(
+            "masks",
+            "MASK EXTRACT",
+            f"{len(detections)} slick polygon(s) segmented · largest {primary_detection.area.km2:.4f} km² "
+            f"at {primary_detection.confidence * 100:.2f}% confidence"
+            + (f" · {primary_detection.backscatter_damping_db:+.1f} dB vs surrounding water" if primary_detection.backscatter_damping_db is not None else ""),
+            detail=(
+                f"Bonn code {bv.appearance_code} → {bv.volume_tonnes_min}–{bv.volume_tonnes_max} t"
+                if bv
+                else None
+            ),
+        )
+    else:
+        tel.stage(
+            "masks",
+            "MASK EXTRACT",
+            "No slick signature above the confidence floor survived the dark-spot gate",
+            detail="scene reads as clean water",
+        )
+
     # 4. Resolve the scene anchor: manual coordinates win; otherwise a georeferenced
     #    scene anchors itself on the primary slick's centroid.
     anchor_source = "none"
@@ -719,6 +890,18 @@ def run_sar_inference(
         latitude, longitude = primary_detection.centroid.lat, primary_detection.centroid.lon
         coordinate_source = "geotiff_embedded_georeference"
         anchor_source = "geotiff"
+        tel.stage(
+            "anchor",
+            "SCENE ANCHOR",
+            f"Slick centroid georeferenced to {latitude:.5f}°N {longitude:.5f}°E from the embedded transform",
+            detail="no manual coordinate entry required",
+        )
+    elif anchor_source == "manual":
+        tel.stage(
+            "anchor",
+            "SCENE ANCHOR",
+            f"Operator-supplied anchor {latitude:.5f}°N {longitude:.5f}°E",
+        )
 
     # 5. Downstream chain — runs whenever an anchor exists (Phase 2's missing input otherwise)
     drift: Optional[DriftAnalysis] = None
@@ -735,9 +918,18 @@ def run_sar_inference(
                 longitude=longitude,
                 timestamp=timestamp_str,
                 coordinate_source=coordinate_source,
+                tel=tel,
             )
         except Exception as exc:  # keep Phase 1 results even if the chain fails
             chain_error = f"{type(exc).__name__}: {exc}"
+            tel.stage("error", "CHAIN HALTED", chain_error, level="error")
+    elif detections:
+        tel.stage(
+            "blocked",
+            "AWAITING ANCHOR",
+            "Detection complete — origin reconstruction needs a scene anchor before it can run",
+            level="warn",
+        )
 
     # 6. Previews (inference resolution → ≤1024 px JPEG): the scene as an analyst expects
     #    to see it (true radiometry), raw and with painted masks
@@ -879,5 +1071,17 @@ def run_sar_inference(
 
     # Persist live investigation result
     _persist_live_investigation(response)
+
+    tel.stage(
+        "done",
+        "INVESTIGATION READY",
+        f"{spill_id} persisted"
+        + (
+            " · full chain complete, dossier available"
+            if response.has_drift_and_attribution
+            else " · Phase 1 complete"
+        ),
+        level="success",
+    )
 
     return response

@@ -602,6 +602,114 @@ export async function analyzeSpillImage(
   return res.json() as Promise<AnalysisResponse>;
 }
 
+// ── Live pipeline telemetry (Server-Sent Events) ─────────────────────────────
+
+export type PipelineLevel = "info" | "warn" | "error" | "success";
+
+/** One real milestone emitted by the backend as the pipeline executes. */
+export interface PipelineStageEvent {
+  type: "stage";
+  key: string;
+  label: string;
+  message: string;
+  detail?: string | null;
+  elapsed_ms: number;
+  /** 0–1, present on stages that report incremental progress (tiled inference). */
+  progress?: number;
+  level?: PipelineLevel;
+  /** When set, this line supersedes the previous line with the same key. */
+  replaces?: string;
+}
+
+export type PipelineEvent =
+  | { type: "open" }
+  | PipelineStageEvent
+  | { type: "result"; data: AnalysisResponse }
+  | { type: "error"; message: string };
+
+/**
+ * Runs the analysis with live telemetry.
+ *
+ * Streams real backend milestones — each one timed server-side and carrying values read
+ * back off the stage that produced it — then resolves with the finished AnalysisResponse.
+ * `onEvent` is called for every stage as it arrives.
+ */
+export async function analyzeSpillImageStream(
+  file: File,
+  anchor: SceneAnchor | undefined,
+  onEvent: (event: PipelineStageEvent) => void,
+  signal?: AbortSignal
+): Promise<AnalysisResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (anchor) {
+    formData.append("latitude", String(anchor.latitude));
+    formData.append("longitude", String(anchor.longitude));
+    if (anchor.timestamp) formData.append("timestamp", anchor.timestamp);
+  }
+
+  const res = await fetch(`${BACKEND}/api/investigations/analyze/stream`, {
+    method: "POST",
+    body: formData,
+    signal,
+  });
+
+  if (!res.ok || !res.body) {
+    let detail = `${res.status} ${res.statusText}`;
+    try {
+      const errJson = await res.json();
+      if (errJson.detail) detail = errJson.detail;
+    } catch {
+      // response wasn't JSON — keep the status line
+    }
+    throw new Error(detail);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: AnalysisResponse | null = null;
+  let failure: string | null = null;
+
+  const consume = (raw: string) => {
+    // SSE frames are separated by a blank line; we only emit single `data:` lines.
+    for (const line of raw.split("\n")) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload) continue;
+
+      let event: PipelineEvent;
+      try {
+        event = JSON.parse(payload) as PipelineEvent;
+      } catch {
+        continue; // ignore a malformed frame rather than killing the run
+      }
+
+      if (event.type === "stage") onEvent(event);
+      else if (event.type === "result") result = event.data;
+      else if (event.type === "error") failure = event.message;
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let split = buffer.indexOf("\n\n");
+    while (split !== -1) {
+      consume(buffer.slice(0, split));
+      buffer = buffer.slice(split + 2);
+      split = buffer.indexOf("\n\n");
+    }
+  }
+  if (buffer.trim()) consume(buffer);
+
+  if (failure) throw new Error(failure);
+  if (!result) throw new Error("Pipeline stream ended without returning a result.");
+  return result;
+}
+
 export async function runDriftReconstruction(
   req: DriftRequest
 ): Promise<DriftAnalysis> {

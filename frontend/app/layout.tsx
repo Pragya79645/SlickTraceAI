@@ -1,33 +1,33 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { Roboto_Slab, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 /**
- * Enterprise Typographic System for SlickTrace AI
+ * Chart & Casefile Typographic System for SlickTrace AI (design.md)
  *
- * Plus Jakarta Sans — Crisp, modern executive headings (h1–h3)
- * Inter             — Clean, high-legibility UI, navigation, body copy, and badges
- * JetBrains Mono    — Telemetry data, coordinates, timestamps, MMSI codes, scores
+ * Roboto Slab    — Technical survey and stamped chart lettering (Display, H1, H2)
+ * Public Sans    — Clean, high-legibility maritime documentation, body copy, and UI
+ * IBM Plex Mono  — Strictly for telemetry data, coordinates, timestamps, MMSI, scores
  */
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const robotoSlab = Roboto_Slab({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["700", "900"],
   display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-sans",
+const publicSans = Public_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -45,9 +45,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${robotoSlab.variable} ${publicSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="h-full">{children}</body>
+      <body className="h-full bg-paper text-ink">{children}</body>
     </html>
   );
 }

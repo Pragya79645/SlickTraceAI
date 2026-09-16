@@ -12,8 +12,8 @@ import CardNav, { type CardNavItem } from "@/components/CardNav";
 const ITEMS: CardNavItem[] = [
   {
     label: "Platform",
-    bgColor: "#141B2D",
-    textColor: "#fff",
+    bgColor: "#E4E6DC",
+    textColor: "#13212B",
     links: [
       { label: "How it works", href: "/#how-it-works", ariaLabel: "How SlickTrace works" },
       { label: "Capabilities", href: "/#capabilities", ariaLabel: "Platform capabilities" },
@@ -21,8 +21,8 @@ const ITEMS: CardNavItem[] = [
   },
   {
     label: "Investigate",
-    bgColor: "#1B2438",
-    textColor: "#fff",
+    bgColor: "#DDE3D8",
+    textColor: "#13212B",
     links: [
       { label: "Upload a scene", href: "/investigate", ariaLabel: "Upload a satellite scene" },
       { label: "Demo case", href: "/dashboard", ariaLabel: "Open the SPILL-001 demo case" },
@@ -30,8 +30,8 @@ const ITEMS: CardNavItem[] = [
   },
   {
     label: "Method",
-    bgColor: "#232C42",
-    textColor: "#fff",
+    bgColor: "#E8E6DA",
+    textColor: "#13212B",
     links: [
       { label: "Model & metrics", href: "/#numbers", ariaLabel: "Model performance and metrics" },
       { label: "Limits & disclaimer", href: "/#method", ariaLabel: "Method limits and disclaimer" },
@@ -42,17 +42,17 @@ const ITEMS: CardNavItem[] = [
 export default function SiteNav() {
   return (
     <CardNav
-      logo="/slicktrace-logo.svg"
-      logoAlt="SlickTrace AI"
+      logo="/brand-logo-icon.png"
+      logoAlt="SlickTrace AI — Detect, trace, attribute"
       items={ITEMS}
-      baseColor="#0D1322"
-      menuColor="#e2e8f0"
-      buttonBgColor="#f59e0b"
-      buttonTextColor="#0b1120"
+      baseColor="#EDEEE6"
+      menuColor="#13212B"
+      buttonBgColor="#13212B"
+      buttonTextColor="#EDEEE6"
       ctaLabel="Start Investigation"
       ctaHref="/investigate"
       ease="power3.out"
-      className="[&_.card-nav]:ring-1 [&_.card-nav]:ring-white/10"
+      className="[&_.card-nav]:ring-1 [&_.card-nav]:ring-grid"
     />
   );
 }

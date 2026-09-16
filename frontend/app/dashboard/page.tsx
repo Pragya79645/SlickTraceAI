@@ -50,19 +50,19 @@ export default async function DashboardPage({
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-slate-950 text-slate-300 gap-4">
-        <div className="text-4xl">⚠</div>
-        <h1 className="text-xl font-bold text-red-400">Backend Unreachable</h1>
-        <p className="text-sm text-slate-500 max-w-md text-center">
+      <div className="flex flex-col items-center justify-center h-screen bg-paper text-ink gap-4 p-6">
+        <div className="text-4xl text-hazard">⚠</div>
+        <h1 className="text-xl font-display font-bold text-hazard">Backend unreachable</h1>
+        <p className="text-sm text-ink-soft max-w-md text-center">
           Could not fetch investigation data from the FastAPI backend.
           <br />
-          Make sure the backend is running:
+          Ensure the backend service is active:
         </p>
-        <pre className="bg-slate-900 border border-slate-700 rounded px-4 py-2 text-xs font-mono text-slate-300">
+        <pre className="bg-paper-alt border border-grid rounded-[2px] px-4 py-2 text-xs font-mono text-ink">
           cd backend{"\n"}
-          slicktrace-env\Scripts\uvicorn app.main:app --port 8000 --reload
+          python -m uvicorn app.main:app --port 8000 --reload
         </pre>
-        <p className="text-xs text-slate-600 mt-2">{String(lastError)}</p>
+        <p className="text-xs text-ink-soft mt-2 font-mono">{String(lastError)}</p>
       </div>
     );
   }

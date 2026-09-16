@@ -20,8 +20,19 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import type { GeoTimestep, InvestigationResponse, CandidateVessel, HabitatImpact, RamsarThreatSite, SpillDetection } from "@/lib/api";
 import { Leaf, Radar, TriangleAlert, X } from "lucide-react";
 import { fetchRamsarGeoJSON } from "@/lib/api";
+import GlassSurface from "@/components/GlassSurface";
 
 const METERS_PER_DEG_LAT = 111195; // matches backend drift_service.py
+
+/** Shared dossier treatment for the floating map overlays (layers, chain-of-custody, why-card, legend, replay). */
+const MAP_GLASS = {
+  width: "100%",
+  height: "auto",
+  borderRadius: 2,
+  backgroundOpacity: 0.35,
+  saturation: 1.2,
+  className: "glass-surface--panel",
+} as const;
 
 /**
  * Projects a Phase 1 pixel coordinate onto the map.
@@ -48,15 +59,15 @@ function pixelToLatLon(
 }
 
 const RISK_COLORS: Record<string, string> = {
-  HIGH: "#ef4444",
-  MEDIUM: "#f59e0b",
-  LOW: "#64748b",
+  HIGH: "#A6103F",
+  MEDIUM: "#8A6D1F",
+  LOW: "#51697A",
 };
 
 const THREAT_COLORS: Record<string, { border: string; fill: string; badge: string }> = {
-  HIGH: { border: "#f43f5e", fill: "#f43f5e33", badge: "bg-rose-950 text-rose-300 border-rose-700 font-bold" },
-  MEDIUM: { border: "#f59e0b", fill: "#f59e0b22", badge: "bg-amber-950 text-amber-300 border-amber-700 font-bold" },
-  LOW: { border: "#10b981", fill: "#10b98118", badge: "bg-emerald-950 text-emerald-300 border-emerald-800" },
+  HIGH: { border: "#A6103F", fill: "#A6103F33", badge: "bg-hazard/10 text-hazard border-hazard/40 font-bold" },
+  MEDIUM: { border: "#8A6D1F", fill: "#8A6D1F22", badge: "bg-pending/10 text-pending border-pending/40 font-bold" },
+  LOW: { border: "#1F4B3F", fill: "#1F4B3F18", badge: "bg-safe/10 text-safe border-safe/40" },
 };
 
 interface SpillMapProps {
@@ -232,14 +243,14 @@ export default function SpillMap({
           : data.detection.polygon.map(([px, py]) => pixelToLatLon(px, py, data.detection, obsLat, obsLon));
 
       L.polygon(polyLatLons, {
-        color: "#f59e0b",
-        fillColor: "#f59e0b",
-        fillOpacity: 0.3,
-        weight: 2.5,
+        color: "#A6103F",
+        fillColor: "#A6103F",
+        fillOpacity: 0.25,
+        weight: 2,
         dashArray: "6 4",
       })
         .bindTooltip(
-          "<b>① OBSERVED OIL SLICK</b><br>Detected via Sentinel-1 SAR YOLOv8 segmentation",
+          "<b>① Observed oil slick</b><br>Detected via Sentinel-1 SAR YOLOv8 segmentation",
           { sticky: true }
         )
         .addTo(spillGroup);
@@ -249,21 +260,20 @@ export default function SpillMap({
         className: "",
         html: `
         <div style="position:relative;display:flex;align-items:center;justify-content:center;">
-          <span style="position:absolute;width:30px;height:30px;border-radius:50%;background:#f59e0b44;animation:ping 2s infinite;"></span>
-          <div style="width:22px;height:22px;border-radius:50%;background:#f59e0b;border:3px solid #fff;box-shadow:0 0 12px #f59e0b;display:flex;align-items:center;justify-content:center;color:#000;font-size:10px;font-weight:900;">
-            ①
+          <div style="width:20px;height:20px;border-radius:2px;background:#A6103F;border:1.5px solid #EDEEE6;display:flex;align-items:center;justify-content:center;color:#EDEEE6;font-size:10px;font-weight:700;">
+            1
           </div>
         </div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
       });
 
       L.marker([obsLat, obsLon], { icon: obsIcon, zIndexOffset: 500 })
         .bindPopup(
-          `<div style="font-family:monospace;font-size:12px;line-height:1.5">
-            <b style="color:#f59e0b;font-size:13px">① OBSERVED OIL SLICK</b><br>
-            <b>Status:</b> Satellite Detection Anchor (0h)<br>
-            <b>Area:</b> ${data.detection.area.km2} km² · <b>Perimeter:</b> ${data.detection.perimeter.km} km<br>
+          `<div style="font-family:var(--font-body),sans-serif;font-size:12px;line-height:1.5;color:#13212B">
+            <b style="color:#A6103F;font-size:13px">Observed oil slick</b><br>
+            <b>Status:</b> Satellite detection anchor (0h)<br>
+            <b>Area:</b> ${data.detection.area.km2} km² &middot; <b>Perimeter:</b> ${data.detection.perimeter.km} km<br>
             <b>Time:</b> ${new Date(data.drift.observation.timestamp).toUTCString()}<br>
             <b>Confidence:</b> ${(data.detection.confidence * 100).toFixed(2)}%
           </div>`
@@ -275,13 +285,13 @@ export default function SpillMap({
         data.drift.hindcast.trajectory.map((p) => [p.lat, p.lon]);
 
       L.polyline(hindcastCoords, {
-        color: "#818cf8",
-        weight: 3.5,
-        dashArray: "8 5",
-        opacity: 0.95,
+        color: "#51697A",
+        weight: 2.5,
+        dashArray: "6 4",
+        opacity: 0.9,
       })
         .bindTooltip(
-          `<b>② BACKWARD DRIFT TRAJECTORY</b><br>Lagrangian advection: ${data.drift.hindcast.duration_hours}h backtrack along ocean current + wind`,
+          `<b>② Backward drift trajectory</b><br>Lagrangian advection: ${data.drift.hindcast.duration_hours}h backtrack along ocean current + wind`,
           { sticky: true }
         )
         .addTo(hindcastGroup);
@@ -292,8 +302,8 @@ export default function SpillMap({
       if (midPoint) {
         const flowIcon = L.divIcon({
           className: "",
-          html: `<div style="background:#4338ca;color:#e0e7ff;padding:2px 6px;border-radius:6px;font-size:9px;font-weight:900;border:1px solid #6366f1;box-shadow:0 2px 6px #0008;white-space:nowrap;">
-            DRIFT ${(data.drift.environment.drift.speed_ms * 1.94384).toFixed(1)} kts
+          html: `<div style="background:#E4E6DC;color:#13212B;padding:2px 6px;border-radius:2px;font-size:9px;font-weight:600;border:1px solid #C7CDC2;white-space:nowrap;">
+            Drift ${(data.drift.environment.drift.speed_ms * 1.94384).toFixed(1)} kts
           </div>`,
           iconSize: [120, 18],
           iconAnchor: [60, 9],
@@ -306,13 +316,12 @@ export default function SpillMap({
         className: "",
         html: `
         <div style="position:relative;display:flex;align-items:center;justify-content:center;">
-          <span style="position:absolute;width:38px;height:38px;border-radius:50%;background:#ef444455;animation:pulse 1.5s infinite;"></span>
-          <div style="width:26px;height:26px;border-radius:50%;background:#ef4444;border:3px solid #fff;box-shadow:0 0 16px #ef4444;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:900;">
-            ③
+          <div style="width:22px;height:22px;border-radius:2px;background:#13212B;border:1.5px solid #EDEEE6;display:flex;align-items:center;justify-content:center;color:#EDEEE6;font-size:10px;font-weight:700;">
+            3
           </div>
         </div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
       });
 
       const ensemble = data.drift.ensemble ?? null;
@@ -321,17 +330,17 @@ export default function SpillMap({
 
       L.marker([origin.lat, origin.lon], { icon: originIcon, zIndexOffset: 600 })
         .bindPopup(
-          `<div style="font-family:monospace;font-size:12px;line-height:1.5">
-            <b style="color:#ef4444;font-size:13px">③ ESTIMATED SOURCE CORRIDOR</b><br>
-            <b>Reconstructed Time:</b> -${origin.hours_before_observation}h before detection<br>
+          `<div style="font-family:var(--font-body),sans-serif;font-size:12px;line-height:1.5;color:#13212B">
+            <b style="color:#13212B;font-size:13px">Estimated source corridor</b><br>
+            <b>Reconstructed time:</b> -${origin.hours_before_observation}h before detection<br>
             <b>Timestamp:</b> ${new Date(origin.timestamp).toUTCString()}<br>
             ${
               origin80 && ensemble
                 ? `<b>80% Origin Band:</b> ${origin80.semi_major_km} × ${origin80.semi_minor_km} km (${origin80.area_km2} km²)<br>
                    <b>Method:</b> ${ensemble.n_particles}-particle Monte Carlo ensemble<br>`
-                : `<b>Corridor Radius:</b> 2.5 km nominal envelope<br>`
+                : `<b>Corridor radius:</b> 2.5 km nominal envelope<br>`
             }
-            <b>Geodesic Backtrack:</b> (${origin.lat.toFixed(4)}°N, ${origin.lon.toFixed(4)}°E)
+            <b>Geodesic backtrack:</b> (${origin.lat.toFixed(4)}°N, ${origin.lon.toFixed(4)}°E)
           </div>`
         )
         .addTo(hindcastGroup);
@@ -340,37 +349,37 @@ export default function SpillMap({
       if (ensemble && originStep) {
         if (ensemble.origin_corridor.length >= 4) {
           L.polygon(ensemble.origin_corridor, {
-            color: "#f97316",
-            weight: 1.5,
-            dashArray: "6 4",
-            fillColor: "#f97316",
-            fillOpacity: 0.06,
+            color: "#51697A",
+            weight: 1,
+            dashArray: "4 4",
+            fillColor: "#51697A",
+            fillOpacity: 0.05,
             interactive: true,
           })
             .bindTooltip(
-              `<b>HINDCAST CORRIDOR</b><br>Convex hull of all ${ensemble.n_particles} particle paths over ${data.drift.hindcast.duration_hours}h backtrack`,
+              `<b>Hindcast corridor</b><br>Convex hull of all ${ensemble.n_particles} particle paths over ${data.drift.hindcast.duration_hours}h backtrack`,
               { sticky: true }
             )
             .addTo(uncertaintyGroup);
         }
 
         const bandStyle: Record<number, { fill: number; weight: number }> = {
-          0.95: { fill: 0.08, weight: 1 },
-          0.8: { fill: 0.14, weight: 1.5 },
-          0.5: { fill: 0.22, weight: 2 },
+          0.95: { fill: 0.06, weight: 1 },
+          0.8: { fill: 0.12, weight: 1.5 },
+          0.5: { fill: 0.18, weight: 2 },
         };
         [...originStep.ellipses]
-          .sort((a, b) => b.confidence - a.confidence) // draw widest first so tighter bands sit on top
+          .sort((a, b) => b.confidence - a.confidence)
           .forEach((e) => {
             const style = bandStyle[e.confidence] ?? { fill: 0.1, weight: 1 };
             L.polygon(e.polygon, {
-              color: "#ef4444",
+              color: "#A6103F",
               weight: style.weight,
-              fillColor: "#ef4444",
+              fillColor: "#A6103F",
               fillOpacity: style.fill,
             })
               .bindTooltip(
-                `<b>${Math.round(e.confidence * 100)}% ORIGIN PROBABILITY BAND</b><br>${e.semi_major_km} × ${e.semi_minor_km} km · ${e.area_km2} km² · axis ${e.orientation_deg}°`,
+                `<b>${Math.round(e.confidence * 100)}% origin probability band</b><br>${e.semi_major_km} × ${e.semi_minor_km} km, ${e.area_km2} km²`,
                 { sticky: true }
               )
               .addTo(uncertaintyGroup);
@@ -378,10 +387,10 @@ export default function SpillMap({
 
         ensemble.origin_particles.forEach(([plat, plon]) => {
           L.circleMarker([plat, plon], {
-            radius: 1.6,
+            radius: 1.5,
             stroke: false,
-            fillColor: "#fca5a5",
-            fillOpacity: 0.55,
+            fillColor: "#A6103F",
+            fillOpacity: 0.45,
             interactive: false,
           }).addTo(uncertaintyGroup);
         });
@@ -390,24 +399,24 @@ export default function SpillMap({
         const startStep = ensembleStepAt(obsIndex) ?? originStep;
         const start80 = startStep.ellipses.find((e) => e.confidence === 0.8) ?? startStep.ellipses[0];
         timelineEllipseRef.current = L.polygon(start80.polygon, {
-          color: "#a78bfa",
-          weight: 2,
+          color: "#51697A",
+          weight: 1.5,
           dashArray: "3 3",
-          fillColor: "#a78bfa",
-          fillOpacity: 0.18,
+          fillColor: "#51697A",
+          fillOpacity: 0.12,
           interactive: false,
         }).addTo(uncertaintyGroup);
       } else {
         // No ensemble on this payload — fall back to a nominal envelope
         L.circle([origin.lat, origin.lon], {
           radius: 2500,
-          color: "#ef4444",
-          fillColor: "#ef4444",
-          fillOpacity: 0.15,
-          weight: 2,
+          color: "#A6103F",
+          fillColor: "#A6103F",
+          fillOpacity: 0.12,
+          weight: 1.5,
           dashArray: "4 4",
         })
-          .bindTooltip(`<b>Source Uncertainty Envelope (2.5 km nominal)</b>`, { sticky: true })
+          .bindTooltip(`<b>Source uncertainty envelope (2.5 km nominal)</b>`, { sticky: true })
           .addTo(hindcastGroup);
       }
 
@@ -416,13 +425,13 @@ export default function SpillMap({
         data.drift.forecast.trajectory.map((p) => [p.lat, p.lon]);
 
       L.polyline(forecastCoords, {
-        color: "#38bdf8",
-        weight: 3,
+        color: "#8A6D1F",
+        weight: 2,
         dashArray: "4 4",
-        opacity: 0.9,
+        opacity: 0.85,
       })
         .bindTooltip(
-          `<b>FORECAST DRIFT TRAJECTORY (+${data.drift.forecast.duration_hours}h)</b><br>Forward advection towards coastal sensitive habitats`,
+          `<b>Forecast drift trajectory (+${data.drift.forecast.duration_hours}h)</b><br>Forward advection towards coastal sensitive habitats`,
           { sticky: true }
         )
         .addTo(forecastGroup);
@@ -432,14 +441,14 @@ export default function SpillMap({
       if (fEnd) {
         const fEndIcon = L.divIcon({
           className: "",
-          html: `<div style="background:#0284c7;color:#fff;border-radius:50%;width:14px;height:14px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;">
+          html: `<div style="background:#8A6D1F;color:#EDEEE6;border-radius:2px;width:16px;height:16px;border:1px solid #EDEEE6;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;">
             +6
           </div>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
         });
         L.marker(fEnd, { icon: fEndIcon, zIndexOffset: 250 })
-          .bindTooltip(`<b>Forecast Endpoint (+6h)</b>`, { sticky: true })
+          .bindTooltip(`<b>Forecast endpoint (+6h)</b>`, { sticky: true })
           .addTo(forecastGroup);
       }
 
@@ -456,8 +465,8 @@ export default function SpillMap({
           ]);
 
           L.polyline(trackCoords, {
-            color: isTop ? "#f59e0b" : color,
-            weight: isTop ? 3.5 : 2,
+            color: isTop ? "#A6103F" : color,
+            weight: isTop ? 3 : 1.5,
             opacity: isTop ? 0.95 : 0.6,
             dashArray: isTop ? undefined : "3 3",
           })
@@ -474,16 +483,16 @@ export default function SpillMap({
           const a: [number, number] = [gap.start_lat, gap.start_lon];
           const b: [number, number] = [gap.end_lat, gap.end_lon];
           const hhmm = (iso: string) => new Date(iso).toISOString().slice(11, 16);
-          const label = `AIS SILENT ${hhmm(gap.start_timestamp)}–${hhmm(gap.end_timestamp)} UTC (${gap.duration_hours.toFixed(1)} h)`;
+          const label = `AIS silent ${hhmm(gap.start_timestamp)}–${hhmm(gap.end_timestamp)} UTC (${gap.duration_hours.toFixed(1)} h)`;
 
           L.polyline([a, b], {
-            color: dark ? "#ef4444" : "#f97316",
-            weight: dark ? 4 : 2.5,
+            color: dark ? "#A6103F" : "#8A6D1F",
+            weight: dark ? 3 : 2,
             opacity: dark ? 0.95 : 0.7,
-            dashArray: "10 8",
+            dashArray: "8 6",
           })
             .bindTooltip(
-              `<b style="color:${dark ? "#ef4444" : "#f97316"}">${label}</b><br>${vessel.vessel_name} — transponder gap ${dark ? "<b>spans the estimated discharge time</b>" : "outside the discharge window"}`,
+              `<b style="color:${dark ? "#A6103F" : "#8A6D1F"}">${label}</b><br>${vessel.vessel_name} — transponder gap ${dark ? "<b>spans the estimated discharge time</b>" : "outside the discharge window"}`,
               { sticky: true }
             )
             .addTo(vesselsGroup);
@@ -491,7 +500,7 @@ export default function SpillMap({
           const mid: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
           const badge = L.divIcon({
             className: "",
-            html: `<div style="background:${dark ? "#7f1d1d" : "#431407"};color:${dark ? "#fecaca" : "#fed7aa"};padding:2px 7px;border-radius:6px;font-size:9px;font-weight:900;border:1.5px solid ${dark ? "#ef4444" : "#f97316"};box-shadow:0 2px 8px #000a;white-space:nowrap;letter-spacing:0.03em;">
+            html: `<div style="background:${dark ? "#A6103F" : "#8A6D1F"};color:#EDEEE6;padding:2px 6px;border-radius:2px;font-size:9px;font-weight:600;border:1px solid #EDEEE6;white-space:nowrap;">
               ${label}
             </div>`,
             iconSize: [200, 18],
@@ -503,18 +512,18 @@ export default function SpillMap({
             const inferred: [number, number] = [gap.inferred_lat, gap.inferred_lon];
             const qIcon = L.divIcon({
               className: "",
-              html: `<div style="width:22px;height:22px;border-radius:50%;background:#ef4444;border:2.5px dashed #fff;box-shadow:0 0 14px #ef4444;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;">?</div>`,
-              iconSize: [22, 22],
-              iconAnchor: [11, 11],
+              html: `<div style="width:20px;height:20px;border-radius:2px;background:#A6103F;border:1.5px dashed #EDEEE6;display:flex;align-items:center;justify-content:center;color:#EDEEE6;font-weight:700;font-size:11px;">?</div>`,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10],
             });
             L.marker(inferred, { icon: qIcon, zIndexOffset: 560 })
               .bindTooltip(
-                `<b style="color:#ef4444">INFERRED POSITION DURING SILENCE</b><br>Linear interpolation at the estimated discharge time<br>${gap.inferred_distance_km} km from reconstructed origin`,
+                `<b style="color:#A6103F">Inferred position during silence</b><br>Linear interpolation at the estimated discharge time<br>${gap.inferred_distance_km} km from reconstructed origin`,
                 { sticky: true }
               )
               .addTo(vesselsGroup);
             L.polyline([inferred, [origin.lat, origin.lon]], {
-              color: "#ef4444",
+              color: "#A6103F",
               weight: 1.5,
               opacity: 0.8,
               dashArray: "2 4",
@@ -542,36 +551,35 @@ export default function SpillMap({
           className: "",
           html: `
           <div style="
-            width:${isTop ? "26px" : "20px"};
-            height:${isTop ? "26px" : "20px"};
-            border-radius:${isTop ? "6px" : "4px"};
-            background:${isTop ? "#f59e0b" : color};
-            border:2px solid #fff;
-            box-shadow:0 0 ${isTop ? "14px #f59e0b" : "6px #000"};
+            width:${isTop ? "24px" : "18px"};
+            height:${isTop ? "24px" : "18px"};
+            border-radius:2px;
+            background:${isTop ? "#A6103F" : color};
+            border:1.5px solid #EDEEE6;
             display:flex;align-items:center;justify-content:center;
-            color:#000;font-weight:900;font-size:${isTop ? "11px" : "9px"};
+            color:#EDEEE6;font-weight:700;font-size:${isTop ? "10px" : "8px"};
             transform:rotate(45deg);
             cursor:pointer;
           ">
             <span style="transform:rotate(-45deg);">${isTop ? "1" : idx + 1}</span>
           </div>`,
-          iconSize: [isTop ? 26 : 20, isTop ? 20 : 20],
-          iconAnchor: [isTop ? 13 : 10, isTop ? 13 : 10],
+          iconSize: [isTop ? 24 : 18, isTop ? 24 : 18],
+          iconAnchor: [isTop ? 12 : 9, isTop ? 12 : 9],
         });
 
         const vMarker = L.marker(primaryCoord, { icon: vIcon, zIndexOffset: isTop ? 480 : 220 })
           .bindPopup(
-            `<div style="font-family:monospace;min-width:240px;line-height:1.5;font-size:12px">
-              <b style="font-size:13px">${isTop ? "⭐ #1 TOP SUSPECT: " : `#${idx + 1} `}${vessel.vessel_name}</b><br>
-              <span style="color:${color};font-weight:bold">● ${vessel.risk} RISK</span>
+            `<div style="font-family:var(--font-body),sans-serif;min-width:240px;line-height:1.5;font-size:12px;color:#13212B">
+              <b style="font-size:13px">${isTop ? "Primary lead: " : `#${idx + 1} `}${vessel.vessel_name}</b><br>
+              <span style="color:${color};font-weight:bold">&bull; ${vessel.risk} risk</span>
               &nbsp; Score: <b>${vessel.score.toFixed(1)} / 100</b><br>
-              <b>Min Distance to Origin:</b> ${vessel.min_distance_km} km<br>
-              <b>Time Offset:</b> ${vessel.time_difference_hours}h<br>
-              <hr style="margin:6px 0;border-color:#334155">
-              <b>Measured AIS Evidence:</b><br>
+              <b>Min distance to origin:</b> ${vessel.min_distance_km} km<br>
+              <b>Time offset:</b> ${vessel.time_difference_hours}h<br>
+              <hr style="margin:6px 0;border-color:#C7CDC2">
+              <b>Measured AIS evidence:</b><br>
               ${vessel.reasons.map((r) => `&bull; ${r}`).join("<br>")}
-              <hr style="margin:6px 0;border-color:#334155">
-              <small style="color:#94a3b8">Analytical ranking, not proof of responsibility.</small>
+              <hr style="margin:6px 0;border-color:#C7CDC2">
+              <small style="color:#51697A">Analytical ranking, not proof of responsibility.</small>
             </div>`
           )
           .addTo(vesselsGroup);
@@ -744,8 +752,8 @@ export default function SpillMap({
       // ── Pulsing Timeline Slick Marker ───────────────────────────────────────
       const slickMarker = L.circleMarker([obsLat, obsLon], {
         radius: 8,
-        color: "#38bdf8",
-        fillColor: "#38bdf8",
+        color: "#A6103F",
+        fillColor: "#A6103F",
         fillOpacity: 0.9,
         weight: 2,
       }).addTo(map);
@@ -814,15 +822,15 @@ export default function SpillMap({
           if (pt.is_speed_reduction) {
             const spdIcon = L.divIcon({
               className: "",
-              html: `<div style="background:#ea580c;color:#fff;font-size:9px;font-weight:900;padding:2px 5px;border-radius:4px;border:1px solid #fed7aa;box-shadow:0 2px 6px #000a;white-space:nowrap;">
-                SPEED DROP (${pt.sog_knots} kts)
+              html: `<div style="background:#8A6D1F;color:#EDEEE6;font-size:9px;font-weight:600;padding:2px 5px;border-radius:2px;border:1px solid #EDEEE6;white-space:nowrap;">
+                Speed drop (${pt.sog_knots} kts)
               </div>`,
               iconSize: [110, 18],
               iconAnchor: [55, 9],
             });
             L.marker([pt.lat, pt.lon], { icon: spdIcon })
               .bindPopup(
-                `<b>MEASURED SPEED REDUCTION ANOMALY</b><br>Speed dropped to <b>${pt.sog_knots} knots</b> near spill window.`
+                `<b>Measured speed reduction anomaly</b><br>Speed dropped to <b>${pt.sog_knots} knots</b> near spill window.`
               )
               .addTo(grp);
           }
@@ -836,15 +844,15 @@ export default function SpillMap({
           [closestLat, closestLon],
         ],
         {
-          color: "#f59e0b",
-          weight: 2.5,
+          color: "#A6103F",
+          weight: 2,
           dashArray: "4 4",
-          opacity: 0.9,
+          opacity: 0.85,
         }
       ).addTo(grp);
 
       connector.bindTooltip(
-        `<b>FORENSIC CORRELATION VECTOR</b><br>Min Geodesic Distance: <b>${activeVessel.min_distance_km} km</b><br>Temporal Offset: <b>${activeVessel.time_difference_hours}h</b>`,
+        `<b>Forensic correlation vector</b><br>Min geodesic distance: <b>${activeVessel.min_distance_km} km</b><br>Temporal offset: <b>${activeVessel.time_difference_hours}h</b>`,
         { sticky: true }
       );
     });
@@ -895,7 +903,7 @@ export default function SpillMap({
       const band = ensStep.ellipses.find((e) => e.confidence === 0.8) ?? ensStep.ellipses[0];
       ellipse.setLatLngs(band.polygon);
       const isHindcast = ensStep.hours_offset < 0;
-      ellipse.setStyle({ color: isHindcast ? "#a78bfa" : "#38bdf8", fillColor: isHindcast ? "#a78bfa" : "#38bdf8" });
+      ellipse.setStyle({ color: isHindcast ? "#51697A" : "#8A6D1F", fillColor: isHindcast ? "#51697A" : "#8A6D1F" });
       ellipse.unbindTooltip().bindTooltip(
         `<b>80% POSITION BAND @ ${ensStep.hours_offset >= 0 ? "+" : ""}${ensStep.hours_offset}h</b><br>${band.semi_major_km} × ${band.semi_minor_km} km · spread ${ensStep.spread_km} km RMS`,
         { sticky: true }
@@ -912,243 +920,266 @@ export default function SpillMap({
   return (
     <div className="relative w-full h-full" id="slicktrace-map-capture">
       <div ref={mapRef} className="w-full h-full" />
+      <div className="slicktrace-map-tint" aria-hidden="true" />
 
-      {/* ── Top Left: Layer Visibility Controls ──────────────────────────────── */}
-      <div className="absolute top-3 left-3 z-[500] bg-slate-950/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-2.5 shadow-2xl text-[11px] font-mono flex flex-wrap items-center gap-3">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pr-1 border-r border-slate-800">
-          LAYERS
+      {/* ── Top Left: Layer Visibility Controls + Causal Chain (one stacked column, never overlapping) */}
+      <div className="map-overlay-left">
+        <GlassSurface {...MAP_GLASS}>
+          <div className="p-2 text-[13px] font-body text-ink flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-ink-soft pr-2 border-r border-grid">
+          Layers
         </span>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-amber-300">
+        <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink text-ink">
           <input
             type="checkbox"
             checked={layers.spill}
             onChange={(e) => setLayers((prev) => ({ ...prev, spill: e.target.checked }))}
-            className="accent-amber-500 rounded"
+            className="accent-[#13212B] rounded-[2px]"
           />
           <span>Spill</span>
         </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-indigo-300">
+        <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink text-ink">
           <input
             type="checkbox"
             checked={layers.hindcast}
             onChange={(e) => setLayers((prev) => ({ ...prev, hindcast: e.target.checked }))}
-            className="accent-indigo-500 rounded"
+            className="accent-[#13212B] rounded-[2px]"
           />
           <span>Hindcast</span>
         </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-sky-300">
+        <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink text-ink">
           <input
             type="checkbox"
             checked={layers.forecast}
             onChange={(e) => setLayers((prev) => ({ ...prev, forecast: e.target.checked }))}
-            className="accent-sky-500 rounded"
+            className="accent-[#13212B] rounded-[2px]"
           />
           <span>Forecast</span>
         </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-amber-300">
+        <label className="flex items-center gap-1.5 cursor-pointer hover:text-ink text-ink">
           <input
             type="checkbox"
             checked={layers.vessels}
             onChange={(e) => setLayers((prev) => ({ ...prev, vessels: e.target.checked }))}
-            className="accent-amber-500 rounded"
+            className="accent-[#13212B] rounded-[2px]"
           />
           <span>Vessels</span>
         </label>
-        <label className="flex items-center gap-1.5 cursor-pointer hover:text-emerald-300 text-emerald-400 font-bold">
+        <label className="flex items-center gap-1.5 cursor-pointer text-safe font-medium">
           <input
             type="checkbox"
             checked={layers.ramsar}
             onChange={(e) => setLayers((prev) => ({ ...prev, ramsar: e.target.checked }))}
-            className="accent-emerald-500 rounded"
+            className="accent-[#1F4B3F] rounded-[2px]"
           />
-          <span className="flex items-center gap-1"><Leaf size={11} strokeWidth={2} />Ramsar Sensitive Areas</span>
+          <span className="flex items-center gap-1"><Leaf size={11} strokeWidth={2} />Ramsar sensitive areas</span>
         </label>
         {data.drift.ensemble && (
-          <label className="flex items-center gap-1.5 cursor-pointer hover:text-red-300 text-red-300 font-bold">
+          <label className="flex items-center gap-1.5 cursor-pointer text-hazard font-medium">
             <input
               type="checkbox"
               checked={layers.uncertainty}
               onChange={(e) => setLayers((prev) => ({ ...prev, uncertainty: e.target.checked }))}
-              className="accent-red-500 rounded"
+              className="accent-[#A6103F] rounded-[2px]"
             />
             <span className="flex items-center gap-1"><Radar size={11} strokeWidth={2} />Uncertainty ({data.drift.ensemble.n_particles}-particle MC)</span>
           </label>
         )}
-      </div>
+          </div>
+        </GlassSurface>
 
-      {/* ── Top Left Floating Causal Chain & Ecological Notice ───────────────── */}
-      <div className="absolute top-14 left-3 z-[500] bg-slate-950/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl text-[10px] font-mono space-y-1.5 max-w-[310px]">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-1">
-          <span className="font-bold text-amber-400">FORENSIC INVESTIGATION VIEW</span>
-          <span className="text-[9px] text-slate-400">CHAIN OF CUSTODY</span>
+        <GlassSurface {...MAP_GLASS}>
+          <div className="p-2.5 text-[13px] font-body text-ink space-y-1.5">
+        <div className="flex items-center justify-between border-b border-grid pb-1">
+          <span className="font-semibold text-ink text-xs">Investigation view</span>
+          <span className="text-xs text-ink-soft">Chain of custody</span>
         </div>
 
-        <div className="text-slate-300 space-y-0.5">
-          <div className="flex items-center gap-1.5 text-red-300 font-bold">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span>③ ESTIMATED SOURCE CORRIDOR</span>
+        <div className="text-ink space-y-0.5">
+          <div className="flex items-center gap-1.5 text-hazard font-semibold text-[13px]">
+            <span className="w-2 h-2 rounded-[2px] bg-hazard" />
+            <span>Estimated source corridor</span>
           </div>
-          <div className="text-[9px] text-slate-400">
-            ~6h reconstructed position · ({origin.lat.toFixed(4)}°N, {origin.lon.toFixed(4)}°E)
+          <div className="text-xs font-mono text-ink-soft">
+            ~6h position: ({origin.lat.toFixed(4)}°N, {origin.lon.toFixed(4)}°E)
           </div>
         </div>
 
-        <div className="text-[9px] text-indigo-300 pt-1 border-t border-slate-800/80 flex items-center justify-between">
-          <span>AIS SEARCH: ±6H · 30 KM RADIUS</span>
-          <span className="text-emerald-400 font-bold">{data.ais_summary.unique_vessels} VESSELS</span>
+        <div className="text-xs text-ink-soft pt-1 border-t border-grid flex items-center justify-between">
+          <span>AIS search: ±6h, 30 km radius</span>
+          <span className="text-ink font-semibold font-mono">{data.ais_summary.unique_vessels} vessels</span>
         </div>
 
         {directRamsar ? (
-          <div className="p-1.5 rounded bg-rose-950/80 border border-rose-700/80 text-[9px] text-rose-300 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping flex-none" />
+          <div className="p-1.5 rounded-[2px] bg-paper/60 border border-grid text-xs text-hazard flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-[2px] bg-hazard flex-none" />
             <span className="truncate">
               <strong>
                 {directRamsar.exposure_basis === "CURRENT_OBSERVATION"
-                  ? "CURRENT OVERLAP: "
-                  : "FORECAST IMPACT: "}
+                  ? "Current overlap: "
+                  : "Forecast impact: "}
               </strong>
               {directRamsar.site_name} (
               {directRamsar.exposure_basis === "CURRENT_OBSERVATION"
-                ? "Observed Spill Overlap"
+                ? "observed spill overlap"
                 : `+${directRamsar.estimated_time_to_impact_hours}h`}
               )
             </span>
           </div>
         ) : topThreat && topThreat.threat_level === "HIGH" ? (
-          <div className="p-1.5 rounded bg-rose-950/80 border border-rose-700/80 text-[9px] text-rose-300 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping flex-none" />
+          <div className="p-1.5 rounded-[2px] bg-paper/60 border border-grid text-xs text-hazard flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-[2px] bg-hazard flex-none" />
             <span className="truncate">
-              <strong>ECOLOGICAL ALERT:</strong> {topThreat.habitat_name} (+{topThreat.estimated_time_to_impact_hours}h)
+              <strong>Ecological alert:</strong> {topThreat.habitat_name} (+{topThreat.estimated_time_to_impact_hours}h)
             </span>
           </div>
         ) : null}
+          </div>
+        </GlassSurface>
       </div>
 
       {/* ── Top Right: "WHY #1?" Map Callout ─────────────────────────────────── */}
       {showWhyCard && activeVessel && (
-        <div className="absolute top-3 right-3 z-[500] bg-slate-900/95 backdrop-blur-md border-2 border-amber-500/80 rounded-xl p-3.5 shadow-2xl text-xs font-mono max-w-[320px] space-y-2 animate-in fade-in">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-            <span className="font-black text-amber-400 tracking-wider text-[11px]">
-              {isTopActive ? `WHY ${activeVessel.vessel_name} RANKS #1` : `SELECTED: ${activeVessel.vessel_name}`}
+        <div className="map-overlay-right animate-in fade-in">
+          <GlassSurface {...MAP_GLASS}>
+          <div className="p-3 text-[13px] font-body text-ink space-y-2">
+          <div className="flex items-center justify-between border-b border-grid pb-1.5">
+            <span className="font-semibold text-ink text-[13px]">
+              {isTopActive ? `Why ${activeVessel.vessel_name} ranks first` : `Selected: ${activeVessel.vessel_name}`}
             </span>
             <button
               type="button"
               onClick={() => setShowWhyCard(false)}
-              className="text-slate-500 hover:text-white text-[10px]"
+              className="text-ink-soft hover:text-ink text-[13px] cursor-pointer"
             >
-              <X size={12} strokeWidth={2.5} />
+              <X size={12} strokeWidth={2} />
             </button>
           </div>
 
-          <div className="space-y-1 text-[11px] text-slate-200">
+          <div className="space-y-1 text-[13px] text-ink">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Min Distance to Origin:</span>
-              <strong className="text-emerald-400">{activeVessel.min_distance_km} km</strong>
+              <span className="text-ink-soft">Min distance to origin:</span>
+              <strong className="font-mono text-ink">{activeVessel.min_distance_km} km</strong>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Temporal Offset:</span>
-              <strong className="text-indigo-300">{activeVessel.time_difference_hours}h</strong>
+              <span className="text-ink-soft">Temporal offset:</span>
+              <strong className="font-mono text-ink">{activeVessel.time_difference_hours}h</strong>
             </div>
             {activeVessel.went_dark && activeVessel.ais_gaps?.some((g) => g.spans_origin_time) && (() => {
               const g = activeVessel.ais_gaps!.find((x) => x.spans_origin_time)!;
               const hhmm = (iso: string) => new Date(iso).toISOString().slice(11, 16);
               return (
-                <div className="p-1.5 rounded bg-red-950/70 border border-red-700 text-red-200">
-                  <div className="font-black text-red-300 text-[10px] tracking-wider flex items-center gap-1"><TriangleAlert size={10} strokeWidth={2.5} />WENT DARK — AIS SILENT {hhmm(g.start_timestamp)}–{hhmm(g.end_timestamp)} UTC ({g.duration_hours.toFixed(1)} h)</div>
-                  <div className="text-[10px] text-red-200/80">Silence spans the discharge time{g.inferred_distance_km != null ? ` · inferred path ${g.inferred_distance_km} km from origin` : ""}</div>
+                <div className="p-1.5 rounded-[2px] bg-paper/60 border border-grid text-hazard">
+                  <div className="font-semibold text-xs flex items-center gap-1">
+                    <TriangleAlert size={10} strokeWidth={2} />
+                    Went dark — AIS silent {hhmm(g.start_timestamp)}–{hhmm(g.end_timestamp)} UTC ({g.duration_hours.toFixed(1)} h)
+                  </div>
+                  <div className="text-[11px] text-hazard/80 mt-0.5">
+                    Silence spans discharge time{g.inferred_distance_km != null ? `, inferred path ${g.inferred_distance_km} km from origin` : ""}
+                  </div>
                 </div>
               );
             })()}
             {!activeVessel.went_dark && (activeVessel.ais_gaps?.length ?? 0) > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">AIS Gap:</span>
-                <strong className="text-orange-300">{activeVessel.ais_gaps![0].duration_hours.toFixed(1)} h · outside window</strong>
+                <span className="text-ink-soft">AIS gap:</span>
+                <strong className="font-mono text-pending">{activeVessel.ais_gaps![0].duration_hours.toFixed(1)} h (outside window)</strong>
               </div>
             )}
             {data.drift.ensemble && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Origin Probability Band:</span>
-                <strong className={activeVessel.origin_band === "50%" ? "text-red-400" : activeVessel.origin_band ? "text-amber-300" : "text-slate-500"}>
+                <span className="text-ink-soft">Origin probability band:</span>
+                <strong className={activeVessel.origin_band === "50%" ? "text-hazard font-mono" : activeVessel.origin_band ? "text-pending font-mono" : "text-ink-soft font-mono"}>
                   {activeVessel.origin_band ? `inside ${activeVessel.origin_band}` : "outside 95%"}
                 </strong>
               </div>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Attribution Score:</span>
-              <strong className="text-amber-400">{activeVessel.score.toFixed(1)} / 100 ({activeVessel.risk})</strong>
+              <span className="text-ink-soft">Attribution score:</span>
+              <strong className="font-mono text-ink font-bold">{activeVessel.score.toFixed(1)} / 100 ({activeVessel.risk})</strong>
             </div>
           </div>
 
           {/* Mini Score Breakdown */}
-          <div className="grid grid-cols-4 gap-1 text-[9px] text-center pt-1 border-t border-slate-800">
-            <div className="p-1 rounded bg-slate-950 border border-slate-800">
-              <span className="text-slate-500 block">PROX</span>
-              <span className="font-bold text-emerald-400">{activeVessel.proximity_score}</span>
+          <div className="grid grid-cols-4 gap-1 text-[11px] text-center pt-1 border-t border-grid">
+            <div className="p-1 rounded-[2px] bg-paper/60 border border-grid">
+              <span className="text-ink-soft block text-[9px]">Prox</span>
+              <span className="font-bold font-mono text-ink">{activeVessel.proximity_score}</span>
             </div>
-            <div className="p-1 rounded bg-slate-950 border border-slate-800">
-              <span className="text-slate-500 block">TEMP</span>
-              <span className="font-bold text-indigo-400">{activeVessel.temporal_score}</span>
+            <div className="p-1 rounded-[2px] bg-paper/60 border border-grid">
+              <span className="text-ink-soft block text-[9px]">Temp</span>
+              <span className="font-bold font-mono text-ink">{activeVessel.temporal_score}</span>
             </div>
-            <div className="p-1 rounded bg-slate-950 border border-slate-800">
-              <span className="text-slate-500 block">TRAJ</span>
-              <span className="font-bold text-amber-400">{activeVessel.trajectory_score}</span>
+            <div className="p-1 rounded-[2px] bg-paper/60 border border-grid">
+              <span className="text-ink-soft block text-[9px]">Traj</span>
+              <span className="font-bold font-mono text-ink">{activeVessel.trajectory_score}</span>
             </div>
-            <div className="p-1 rounded bg-slate-950 border border-slate-800">
-              <span className="text-slate-500 block">BEH</span>
-              <span className="font-bold text-orange-400">{activeVessel.behavioral_score}</span>
+            <div className="p-1 rounded-[2px] bg-paper/60 border border-grid">
+              <span className="text-ink-soft block text-[9px]">Beh</span>
+              <span className="font-bold font-mono text-ink">{activeVessel.behavioral_score}</span>
             </div>
           </div>
 
-          <div className="pt-1 text-[9px] text-slate-400 leading-tight border-t border-slate-800/80">
-            <strong>ANALYTICAL RANKING</strong> — NOT PROOF OF RESPONSIBILITY
+          <div className="pt-1 text-[11px] text-ink-soft leading-tight border-t border-grid">
+            Analytical ranking to prioritise investigation — not proof of responsibility.
           </div>
+          </div>
+          </GlassSurface>
         </div>
       )}
 
       {/* ── Bottom Left: Investigation Map Legend & Step Sequence ─────────────── */}
-      <div className="absolute bottom-3 left-3 z-[500] bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3 shadow-2xl text-[11px] font-mono space-y-1.5 min-w-[250px]">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-800 flex items-center justify-between">
-          <span>FORENSIC &amp; ECOLOGY MAP LEGEND</span>
+      <div className="map-overlay-legend">
+        <GlassSurface {...MAP_GLASS}>
+          <div className="p-2.5 text-[13px] font-body text-ink space-y-1.5">
+        <div className="text-[13px] font-semibold text-ink-soft pb-1 border-b border-grid flex items-center justify-between">
+          <span>Map legend</span>
         </div>
-        <div className="flex items-center gap-2 text-slate-200">
-          <span className="w-3 h-3 rounded-full bg-amber-400 border border-white flex-none" />
-          <span>① Observed Slick (0h)</span>
+        <div className="flex items-center gap-2 text-ink">
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-hazard flex-none" />
+          <span>Observed slick (0h)</span>
         </div>
-        <div className="flex items-center gap-2 text-indigo-300">
-          <span className="w-4 h-0.5 border-t-2 border-dashed border-indigo-400 flex-none" />
-          <span>② Backward Drift Path (-6h)</span>
+        <div className="flex items-center gap-2 text-ink-soft">
+          <span className="w-4 h-0.5 border-t-2 border-dashed border-ink-soft flex-none" />
+          <span>Backward drift path (-6h)</span>
         </div>
-        <div className="flex items-center gap-2 text-red-300">
-          <span className="w-3 h-3 rounded-full bg-red-500 border border-white flex-none shadow-sm shadow-red-500/80" />
-          <span className="font-bold">③ Estimated Source Corridor</span>
+        <div className="flex items-center gap-2 text-ink font-medium">
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-ink flex-none" />
+          <span>Estimated source corridor</span>
         </div>
-        <div className="flex items-center gap-2 text-amber-300 font-bold">
-          <span className="w-3.5 h-3.5 rounded bg-amber-400 border border-white flex-none rotate-45" />
-          <span>④ &amp; ⑤ Top Suspect Track (#1)</span>
+        <div className="flex items-center gap-2 text-ink">
+          <span className="w-2.5 h-2.5 rounded-[2px] bg-hazard flex-none rotate-45" />
+          <span>Top suspect track (#1)</span>
         </div>
-        <div className="flex items-center gap-2 text-emerald-300">
-          <span className="w-3.5 h-3.5 rounded-full bg-emerald-700 border border-emerald-400 flex items-center justify-center text-[8px] flex-none">
-            <Leaf size={11} strokeWidth={2} />
+        <div className="flex items-center gap-2 text-safe">
+          <span className="w-3 h-3 rounded-[2px] bg-safe text-paper flex items-center justify-center text-[8px] flex-none">
+            <Leaf size={9} strokeWidth={2} />
           </span>
-          <span>⑥ Sensitive Habitats &amp; Radii ({data.ecology?.assessment.habitats_evaluated || 0})</span>
+          <span>Sensitive habitats ({data.ecology?.assessment.habitats_evaluated || 0})</span>
         </div>
-        <div className="pt-1 text-[9px] text-slate-500 border-t border-slate-800/80">
-          <i>Screening proximity model · Forecast-based</i>
+        <div className="pt-1 text-[11px] text-ink-soft border-t border-grid">
+          <i>Screening proximity model, forecast-based</i>
         </div>
+          </div>
+        </GlassSurface>
       </div>
 
       {/* ── Bottom Right: Replay Investigation Controller ───────────────────── */}
-      <div className="absolute bottom-3 right-16 z-[500] bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl p-2 shadow-2xl flex items-center gap-2 font-mono text-xs">
+      <div className="map-overlay-replay">
+        <GlassSurface {...MAP_GLASS}>
+          <div className="p-1.5 flex items-center gap-2 text-[13px] font-body">
         <button
           type="button"
           onClick={() => setIsReplaying(!isReplaying)}
-          className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-md shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer"
+          className="px-2.5 py-1 rounded-[2px] bg-ink hover:bg-ink-soft text-paper font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
         >
-          <span>{isReplaying ? "⏸ PAUSE" : "▶ REPLAY INVESTIGATION"}</span>
+          <span>{isReplaying ? "Pause" : "Replay investigation"}</span>
         </button>
-        <span className="text-[10px] text-slate-400 hidden sm:inline">
-          -6h → Now → +6h
+        <span className="text-xs text-ink-soft font-mono hidden sm:inline">
+          −6h → 0h → +6h
         </span>
+          </div>
+        </GlassSurface>
       </div>
     </div>
   );

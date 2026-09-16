@@ -27,17 +27,17 @@ export default function DossierButton({ data, className = "" }: { data: Investig
         type="button"
         onClick={onClick}
         disabled={busy}
-        title="Download a forensic dossier PDF for enforcement (MARPOL Annex I)"
-        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait bg-red-950/60 hover:bg-red-900/70 text-red-200 border-red-800 ${className}`}
+        title="Download forensic dossier PDF for enforcement (MARPOL Annex I)"
+        className={`text-[11px] font-medium px-2.5 py-1.5 rounded-[2px] border border-grid bg-paper hover:bg-paper-alt text-ink transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${className}`}
       >
         {busy ? (
-          <LoaderCircle size={13} strokeWidth={2} className="animate-spin" />
+          <LoaderCircle size={13} strokeWidth={2} className="animate-spin text-ink-soft" />
         ) : (
-          <FileText size={13} strokeWidth={1.75} />
+          <FileText size={13} strokeWidth={1.75} className="text-ink-soft" />
         )}
-        <span className="hidden md:inline">{busy ? "Building dossier…" : "Dossier"}</span>
+        <span className="hidden md:inline">{busy ? "Building dossier…" : "Export dossier"}</span>
       </button>
-      {error && <span className="text-[10px] text-red-400 font-mono">{error}</span>}
+      {error && <span className="text-[10px] text-hazard font-mono">{error}</span>}
     </div>
   );
 }

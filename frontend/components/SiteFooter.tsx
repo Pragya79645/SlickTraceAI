@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * SiteFooter — shared footer across the landing, investigate and dashboard pages.
  *
@@ -36,37 +38,47 @@ const SOURCES = [
 
 export default function SiteFooter() {
   return (
-    <footer className="relative border-t border-slate-800/80 bg-slate-950">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+    <footer className="relative border-t border-grid bg-paper-alt text-ink">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-1.5">
-              <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-sm">
-                ST
-              </div>
-              <span className="text-lg font-black tracking-tight text-white">SlickTrace</span>
-              <span className="text-lg font-light text-amber-400">AI</span>
+            <div className="flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand-logo-icon.png"
+                alt="SlickTrace AI mark"
+                className="w-9 h-9 object-contain shrink-0"
+              />
+              <span className="flex flex-col leading-none">
+                <span className="flex items-baseline gap-1">
+                  <span className="text-base font-display font-black text-ink tracking-tight">SlickTrace</span>
+                  <span className="text-base font-display font-bold text-[#2E8B8F]">AI</span>
+                </span>
+                <span className="font-mono text-[7.5px] text-ink-soft tracking-[0.22em] mt-1">
+                  DETECT / TRACE / ATTRIBUTE
+                </span>
+              </span>
             </div>
-            <p className="mt-3 text-xs text-slate-400 leading-relaxed">
+            <p className="mt-2.5 text-xs text-ink-soft leading-relaxed">
               Satellite oil-spill detection, drift reconstruction and explainable vessel
               attribution for marine environment protection and enforcement.
             </p>
-            <p className="mt-3 text-[11px] font-mono text-slate-600">v1.0 · Smart India Hackathon 2026</p>
+            <p className="mt-2 text-[11px] font-mono text-ink-soft">MARPOL Annex I Investigative Protocol</p>
           </div>
 
           {/* Link columns */}
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <h3 className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.14em]">
+              <h3 className="text-xs font-semibold text-ink">
                 {col.title}
               </h3>
-              <ul className="mt-3.5 space-y-2">
+              <ul className="mt-2.5 space-y-1.5">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-xs text-slate-400 hover:text-amber-300 transition-colors"
+                      className="text-xs text-ink-soft hover:text-ink transition-colors"
                     >
                       {l.label}
                     </Link>
@@ -78,12 +90,12 @@ export default function SiteFooter() {
 
           {/* Data provenance */}
           <div>
-            <h3 className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.14em]">
+            <h3 className="text-xs font-semibold text-ink">
               Data sources
             </h3>
-            <ul className="mt-3.5 space-y-2">
+            <ul className="mt-2.5 space-y-1">
               {SOURCES.map((s) => (
-                <li key={s} className="text-xs text-slate-400 leading-relaxed">
+                <li key={s} className="text-xs text-ink-soft leading-relaxed">
                   {s}
                 </li>
               ))}
@@ -92,12 +104,12 @@ export default function SiteFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] font-mono text-slate-600 text-center sm:text-left">
+        <div className="mt-8 pt-4 border-t border-grid flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ink-soft">
+          <p className="font-mono">
             SAR Detection + Lagrangian Hindcast + Monte Carlo + AIS Attribution
           </p>
-          <p className="text-[11px] text-slate-500 text-center sm:text-right max-w-md">
-            Attribution scores rank consistency with the reconstructed discharge — they are an
+          <p className="sm:text-right max-w-md">
+            Attribution scores rank consistency with the reconstructed discharge — an
             investigative prioritisation, not proof of responsibility.
           </p>
         </div>

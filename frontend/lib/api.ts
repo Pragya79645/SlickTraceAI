@@ -577,7 +577,13 @@ export async function analyzeSpillImage(
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  if (anchor) {
+  if (
+    anchor &&
+    typeof anchor.latitude === "number" &&
+    !isNaN(anchor.latitude) &&
+    typeof anchor.longitude === "number" &&
+    !isNaN(anchor.longitude)
+  ) {
     formData.append("latitude", String(anchor.latitude));
     formData.append("longitude", String(anchor.longitude));
     if (anchor.timestamp) formData.append("timestamp", anchor.timestamp);
@@ -642,7 +648,13 @@ export async function analyzeSpillImageStream(
 ): Promise<AnalysisResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  if (anchor) {
+  if (
+    anchor &&
+    typeof anchor.latitude === "number" &&
+    !isNaN(anchor.latitude) &&
+    typeof anchor.longitude === "number" &&
+    !isNaN(anchor.longitude)
+  ) {
     formData.append("latitude", String(anchor.latitude));
     formData.append("longitude", String(anchor.longitude));
     if (anchor.timestamp) formData.append("timestamp", anchor.timestamp);

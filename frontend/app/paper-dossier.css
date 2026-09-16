@@ -1,0 +1,258 @@
+/* ─── SlickTrace · Physical Paper Dossier Treatment v2 (visual-only) ───────
+   "Modern satellite-intelligence software printed onto forensic nautical
+   dossiers." Cool seafoam / blueprint palette preserved — NOT brown pirate
+   parchment. Deckled, frayed torn edges inspired by aged archival sheets,
+   rendered with SVG-turbulence displacement masks (organic, asymmetric).
+   No layout / logic / hierarchy changes. No external assets.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --dossier-seafoam: #dde3d8;
+  --dossier-warm: #e6e2d2;
+  --dossier-blue: #d9e0dc;
+  --dossier-archival: #e8e6da;
+  /* cool deckle tone: weathered slate-olive, NOT sepia/brown */
+  --deckle: 74, 86, 76;
+  --deckle-blue: 81, 105, 122;
+}
+
+/* ================= base sheet: realistic fibrous paper ================= */
+.dossier-sheet {
+  position: relative;
+  border-radius: 1px !important;
+  background-color: var(--dossier-seafoam);
+  background-image:
+    /* soft tonal drift across the sheet */
+    radial-gradient(120% 90% at 12% 8%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(110% 100% at 88% 92%, rgba(var(--deckle-blue), 0.09) 0%, rgba(var(--deckle-blue), 0) 55%),
+    /* faint diagonal crease sheens (field-folded paperwork) */
+    linear-gradient(112deg, rgba(255,255,255,0) 46.5%, rgba(255,255,255,0.22) 48.2%, rgba(19,33,43,0.035) 49.6%, rgba(255,255,255,0) 51.2%),
+    linear-gradient(68deg, rgba(255,255,255,0) 62%, rgba(255,255,255,0.14) 63.4%, rgba(19,33,43,0.03) 64.6%, rgba(255,255,255,0) 66%),
+    /* two whisper-faint age spots */
+    radial-gradient(90px 60px at 78% 24%, rgba(110, 116, 100, 0.06) 0%, rgba(110, 116, 100, 0) 70%),
+    radial-gradient(120px 70px at 18% 82%, rgba(110, 116, 100, 0.05) 0%, rgba(110, 116, 100, 0) 70%),
+    linear-gradient(175deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 30%, rgba(19,33,43,0.045) 100%),
+    /* laid chain-lines of mould-made paper, barely there */
+    repeating-linear-gradient(0deg, rgba(19,33,43,0.028) 0 1px, rgba(255,255,255,0) 1px 4px),
+    /* fine fibrous grain */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9 0.55' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.32 0 0 0 0 0.38 0 0 0 0 0.36 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23f)'/%3E%3C/svg%3E"),
+    /* long parchment fibers */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='200'%3E%3Cfilter id='h'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.012 0.14' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.4 0 0 0 0 0.44 0 0 0 0 0.4 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='420' height='200' filter='url(%23h)'/%3E%3C/svg%3E");
+  /* imperfect printed hairline; the torn mask slightly erodes it like ink on deckle */
+  border: 1px solid rgba(19, 33, 43, 0.26) !important;
+  /* deckled rim shading: darker frayed lip + inner lift, cool slate-olive */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    inset 0 0 3px rgba(255, 255, 255, 0.5),
+    inset 0 0 22px rgba(var(--deckle), 0.13),
+    inset 0 -20px 30px -20px rgba(var(--deckle), 0.24),
+    inset 0 14px 24px -18px rgba(var(--deckle), 0.18),
+    inset 16px 0 24px -18px rgba(var(--deckle), 0.16),
+    inset -16px 0 24px -18px rgba(var(--deckle), 0.18) !important;
+  /* physical elevation follows the torn silhouette */
+  filter: drop-shadow(0 12px 15px rgba(19, 33, 43, 0.14)) drop-shadow(0 2px 3px rgba(19, 33, 43, 0.12));
+}
+
+/* tonal variants keep the same fiber/deckle system, shifted in hue */
+.dossier-warm {
+  background-color: var(--dossier-warm);
+  background-image:
+    radial-gradient(120% 90% at 15% 10%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 45%),
+    radial-gradient(100% 90% at 85% 90%, rgba(138,109,31,0.07) 0%, rgba(138,109,31,0) 55%),
+    linear-gradient(112deg, rgba(255,255,255,0) 46.5%, rgba(255,255,255,0.2) 48.2%, rgba(60,50,20,0.04) 49.6%, rgba(255,255,255,0) 51.2%),
+    radial-gradient(100px 64px at 72% 70%, rgba(120,112,88,0.06) 0%, rgba(120,112,88,0) 70%),
+    linear-gradient(178deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 32%, rgba(60,50,20,0.06) 100%),
+    repeating-linear-gradient(0deg, rgba(60,50,20,0.03) 0 1px, rgba(255,255,255,0) 1px 4px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85 0.5' numOctaves='2' seed='21' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.3 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+.dossier-cool {
+  background-color: var(--dossier-blue);
+  filter: drop-shadow(0 10px 13px rgba(19, 33, 43, 0.12)) drop-shadow(0 2px 3px rgba(19, 33, 43, 0.1));
+}
+.dossier-archival { background-color: var(--dossier-archival); }
+
+/* ============ chart fragment + ruler, BEHIND content (decorative) ============ */
+.dossier-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  background-image:
+    /* engineer's ruler ticks along the top edge, like the reference dossier */
+    repeating-linear-gradient(90deg, rgba(19,33,43,0.28) 0 1px, rgba(19,33,43,0) 1px 9px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='360' viewBox='0 0 520 360'%3E%3Cg fill='none' stroke='%2351697A' stroke-opacity='0.14' stroke-width='1'%3E%3Cpath d='M-20,90 C90,70 160,110 260,88 C360,66 430,100 560,80' stroke-dasharray='5 6'/%3E%3Cpath d='M-20,150 C100,132 200,168 300,146 C400,124 460,158 560,140'/%3E%3Cpath d='M-20,215 C110,196 210,232 320,208 C410,190 470,220 560,204' stroke-dasharray='2 5'/%3E%3Ccircle cx='432' cy='72' r='52' stroke-dasharray='3 4'/%3E%3Ccircle cx='432' cy='72' r='38'/%3E%3Ccircle cx='432' cy='72' r='4'/%3E%3Cpath d='M432,10 L432,134 M370,72 L494,72 M388,28 L476,116 M476,28 L388,116' stroke-opacity='0.1'/%3E%3C/g%3E%3Cg fill='%2351697A' fill-opacity='0.18' font-family='monospace' font-size='8'%3E%3Ctext x='18' y='30'%3E42M CONTOUR · LVL 4%3C/text%3E%3Ctext x='380' y='250'%3E+91.2 SOUNDING%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100% 9px, 520px 360px;
+  background-position: top left, right top;
+  background-repeat: repeat-x, no-repeat;
+  mix-blend-mode: multiply;
+}
+.dossier-sheet > * { position: relative; z-index: 1; }
+
+/* speckle lift on a separate layer so grain never muddies text */
+.dossier-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.3 0 0 0 0 0.33 0 0 0 0 0.3 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23s)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* ================= realistic torn edges (SVG displacement masks) ============
+   Each variant has its own turbulence seed/scale: broad deckle waviness plus
+   fine fiber-level fray. clip-path retained as a fallback where masks are
+   unsupported. Mask insets (~5px + displacement) never reach padded content. */
+.dossier-sheet:is(.torn-a, .torn-b, .torn-c, .torn-d, .torn-bottom) {
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+/* A — primary dossier: pronounced deckle, frayed right lip */
+.torn-a {
+  clip-path: polygon(0.4% 1.2%, 8% 0.3%, 17% 0.9%, 27% 0.2%, 38% 0.8%, 49% 0.1%, 60% 0.7%, 71% 0.2%, 82% 0.8%, 91% 0.3%, 99.4% 1%, 100% 8%, 99.5% 18%, 100% 29%, 99.4% 40%, 99.9% 52%, 99.4% 63%, 100% 74%, 99.5% 85%, 99.8% 94%, 99.2% 98.8%, 91% 99.6%, 81% 98.9%, 70% 99.7%, 59% 99%, 48% 99.8%, 37% 99.1%, 26% 99.7%, 15% 99%, 6% 99.6%, 0.5% 98.9%, 0% 90%, 0.5% 79%, 0% 68%, 0.5% 56%, 0% 44%, 0.5% 32%, 0% 21%, 0.5% 10%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.032 0.048' numOctaves='4' seed='7' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='9' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.032 0.048' numOctaves='4' seed='7' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='9' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+/* B — logbook sheet: calmer top, nibbled left edge (torn from binding) */
+.torn-b {
+  clip-path: polygon(0.6% 0.6%, 12% 0%, 24% 0.7%, 36% 0.1%, 48% 0.6%, 61% 0%, 73% 0.6%, 85% 0.1%, 95% 0.5%, 99.6% 1.4%, 99.9% 12%, 99.3% 24%, 99.8% 36%, 99.4% 48%, 99.8% 60%, 99.3% 72%, 99.7% 84%, 99.4% 95%, 98.6% 99.4%, 88% 99%, 77% 99.7%, 66% 99.1%, 54% 99.6%, 43% 99%, 31% 99.6%, 20% 99.1%, 9% 99.5%, 0.7% 99.2%, 0.2% 88%, 0.6% 76%, 0.1% 64%, 0.6% 52%, 0.1% 40%, 0.6% 28%, 0.2% 16%, 0.5% 6%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045 0.03' numOctaves='4' seed='19' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045 0.03' numOctaves='4' seed='19' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+/* C — evidence card: fine fray all around, mild amplitude */
+.torn-c {
+  clip-path: polygon(0.3% 1.6%, 10% 0.5%, 21% 0%, 33% 0.6%, 45% 0%, 57% 0.5%, 69% 0.1%, 80% 0.6%, 90% 0.2%, 99.5% 0.8%, 99.7% 14%, 100% 27%, 99.5% 41%, 99.9% 55%, 99.5% 69%, 99.9% 83%, 99.4% 96%, 98.9% 99.2%, 89% 99.7%, 78% 99.2%, 67% 99.6%, 55% 99.3%, 44% 99.7%, 32% 99.2%, 21% 99.6%, 10% 99.3%, 0.6% 99.7%, 0.1% 88%, 0.5% 75%, 0% 62%, 0.4% 49%, 0% 36%, 0.4% 23%, 0% 11%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055 0.06' numOctaves='3' seed='33' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='6' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.055 0.06' numOctaves='3' seed='33' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='6' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+/* D — telemetry sheet: soft uneven deckle, dog-eared feel */
+.torn-d {
+  clip-path: polygon(1% 0.4%, 14% 0.9%, 26% 0.2%, 39% 0.6%, 52% 0%, 65% 0.7%, 77% 0.2%, 89% 0.6%, 99.2% 0.3%, 99.6% 10%, 99.1% 22%, 99.6% 34%, 99.2% 47%, 99.6% 60%, 99.1% 73%, 99.5% 86%, 99.2% 97%, 98.4% 99.5%, 86% 99.1%, 74% 99.6%, 62% 99%, 50% 99.5%, 38% 99.1%, 26% 99.6%, 14% 99.1%, 2% 99.6%, 0.4% 98.6%, 0% 86%, 0.5% 73%, 0% 60%, 0.4% 47%, 0% 34%, 0.5% 21%, 0.1% 9%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.028 0.042' numOctaves='4' seed='51' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.028 0.042' numOctaves='4' seed='51' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+/* bottom-heavy rip: top/sides near-straight, bottom edge heavily torn */
+.torn-bottom {
+  clip-path: polygon(0.3% 0.2%, 99.7% 0.2%, 99.8% 88%, 97% 92%, 93% 96.5%, 88% 99.3%, 82% 97.5%, 75% 99.6%, 68% 98%, 60% 99.7%, 52% 98.3%, 44% 99.6%, 36% 98.2%, 28% 99.4%, 20% 98%, 13% 99.2%, 6% 97.8%, 0.2% 99%, 0.2% 40%);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.09' numOctaves='4' seed='88' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='10' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='t' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02 0.09' numOctaves='4' seed='88' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='10' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='228' height='228' fill='white' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+
+/* gentle physical rotation for secondary sheets */
+.tilt-l { transform: rotate(-0.45deg); }
+.tilt-r { transform: rotate(0.4deg); }
+.tilt-slight-l { transform: rotate(-0.25deg); }
+.tilt-slight-r { transform: rotate(0.28deg); }
+
+/* ================= masking tape: woven, translucent, serrated ================= */
+.tape { position: relative; }
+.tape > .tape-strip,
+.tape-strip {
+  position: absolute;
+  top: -11px;
+  width: 96px;
+  height: 25px;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(19,33,43,0.05) 0 1px, rgba(255,255,255,0) 1px 3px),
+    linear-gradient(180deg, rgba(235,233,221,0.94), rgba(213,210,194,0.9));
+  border-left: 1px dashed rgba(19,33,43,0.12);
+  border-right: 1px dashed rgba(19,33,43,0.12);
+  box-shadow: 0 2px 3px rgba(19,33,43,0.14), inset 0 1px 0 rgba(255,255,255,0.6);
+  opacity: 0.94;
+  pointer-events: none;
+  z-index: 5;
+  /* serrated torn-tape ends */
+  clip-path: polygon(1% 8%, 3% 0%, 97% 2%, 99% 12%, 100% 88%, 98% 100%, 2% 98%, 0% 88%);
+}
+.tape-strip.tl { left: 42px; transform: rotate(-3deg); }
+.tape-strip.tr { right: 42px; transform: rotate(2.5deg); }
+.tape-strip.tc { left: 50%; margin-left: -48px; transform: rotate(-1deg); }
+
+/* restrained curled corner */
+.fold-corner { position: relative; }
+.fold-corner > .fold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(315deg, rgba(19,33,43,0.16) 0%, rgba(19,33,43,0.05) 47%, rgba(255,255,255,0.65) 50%, rgba(0,0,0,0) 52%);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* archival stamp: printed, distressed, never a neon badge */
+.archival-stamp {
+  display: inline-block;
+  transform: rotate(-1.2deg);
+  border: 1.5px solid currentColor !important;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  padding: 3px 10px !important;
+  letter-spacing: 0.14em !important;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='40'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 4 -1.4'/%3E%3C/filter%3E%3Crect width='140' height='40' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='40'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='9'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 4 -1.4'/%3E%3C/filter%3E%3Crect width='140' height='40' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 140px 40px;
+  mask-size: 140px 40px;
+  opacity: 0.88;
+}
+
+/* faint double document rule / dashed archival divider */
+.doc-rule-double { border-bottom: 3px double rgba(19, 33, 43, 0.35) !important; }
+.archival-divider {
+  background-image: repeating-linear-gradient(90deg, rgba(19,33,43,0.3) 0 7px, rgba(19,33,43,0) 7px 11px) !important;
+  height: 1px;
+  opacity: 0.7;
+}
+
+/* registration marks for the dropzone corners */
+.reg-mark { position: relative; }
+.reg-mark i {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 0 solid rgba(19,33,43,0.55);
+  pointer-events: none;
+}
+.reg-mark i:nth-child(1) { top: 6px; left: 6px; border-top-width: 1.5px; border-left-width: 1.5px; }
+.reg-mark i:nth-child(2) { top: 6px; right: 6px; border-top-width: 1.5px; border-right-width: 1.5px; }
+.reg-mark i:nth-child(3) { bottom: 6px; left: 6px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+.reg-mark i:nth-child(4) { bottom: 6px; right: 6px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+/* background: blueprint grid + faint bathymetry, lighter than the sheets */
+.cartographic-grid {
+  background-image:
+    radial-gradient(90% 60% at 50% 0%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500' viewBox='0 0 900 500'%3E%3Cg fill='none' stroke='%2351697A' stroke-opacity='0.10' stroke-width='1'%3E%3Cpath d='M-20,120 C150,95 300,145 470,118 C640,91 760,130 930,108'/%3E%3Cpath d='M-20,200 C160,175 320,225 490,198 C660,171 770,210 930,188' stroke-dasharray='6 7'/%3E%3Cpath d='M-20,290 C170,265 330,315 500,288 C670,261 780,300 930,278'/%3E%3Cpath d='M-20,380 C180,355 340,405 510,378 C680,351 790,390 930,368' stroke-dasharray='2 6'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(to right, rgba(154,163,148,0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(154,163,148,0.22) 1px, transparent 1px),
+    linear-gradient(to right, rgba(154,163,148,0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(154,163,148,0.4) 1px, transparent 1px) !important;
+  background-size: auto, 900px 500px, 20px 20px, 20px 20px, 100px 100px, 100px 100px !important;
+}
+
+/* sheets settle onto the desk (respects existing motion) */
+@media (prefers-reduced-motion: no-preference) {
+  .dossier-reveal { animation: dossier-settle 0.7s cubic-bezier(0.22, 0.8, 0.3, 1) both; }
+  @keyframes dossier-settle {
+    from { opacity: 0; translate: 0 14px; rotate: var(--settle-from, 0.6deg); }
+    to { opacity: 1; translate: 0 0; rotate: 0deg; }
+  }
+}
+
+.dossier-sheet :focus-visible {
+  outline: 2px solid #0e5a6d;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  .tilt-l, .tilt-r, .tilt-slight-l, .tilt-slight-r { transform: none; }
+  .tape-strip.tl { left: 16px; }
+  .tape-strip.tr { right: 16px; }
+}

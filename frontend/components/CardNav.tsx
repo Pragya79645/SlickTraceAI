@@ -166,63 +166,105 @@ const CardNav: React.FC<CardNavProps> = ({
 
   return (
     <div
-      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[90%] max-w-[800px] z-[99] top-[1.2em] md:top-[2em] ${className}`}
+      className={`card-nav-container absolute left-1/2 -translate-x-1/2 w-[92%] max-w-[880px] z-[99] top-[1.2em] md:top-[2em] ${className}`}
     >
       <nav
         ref={navRef}
-        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-xl shadow-md relative overflow-hidden will-change-[height]`}
-        style={{ backgroundColor: baseColor }}
+        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-[2px] relative overflow-hidden will-change-[height] shadow-[0_14px_28px_-16px_rgba(19,33,43,0.35),0_2px_6px_-2px_rgba(19,33,43,0.18)]`}
+        style={{
+          backgroundColor: baseColor,
+          border: '1px solid var(--grid-strong)',
+          backgroundImage:
+            'radial-gradient(120% 100% at 10% 0%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 50%), repeating-linear-gradient(0deg, rgba(19,33,43,0.022) 0 1px, rgba(255,255,255,0) 1px 4px)',
+        }}
       >
-        <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between p-2 pl-[1.1rem] z-[2]">
-          <div
-            className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''} group h-full flex flex-col items-center justify-center cursor-pointer gap-[6px] order-2 md:order-none`}
-            onClick={toggleMenu}
-            onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleMenu();
-              }
-            }}
-            role="button"
-            aria-label={isExpanded ? 'Close menu' : 'Open menu'}
-            aria-expanded={isExpanded}
-            tabIndex={0}
-            style={{ color: menuColor || '#000' }}
+        <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between gap-2 p-2 pl-2 pr-2 z-[2] border-b border-grid">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''} group h-[42px] px-2.5 flex items-center gap-2 cursor-pointer border border-grid-strong bg-paper-alt hover:bg-paper rounded-[2px] transition-colors shrink-0`}
+              onClick={toggleMenu}
+              onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleMenu();
+                }
+              }}
+              role="button"
+              aria-label={isExpanded ? 'Close menu' : 'Open menu'}
+              aria-expanded={isExpanded}
+              tabIndex={0}
+              style={{ color: menuColor || '#000' }}
+            >
+              <span className="flex flex-col items-center justify-center gap-[5px]">
+                <span
+                  className={`hamburger-line block w-[22px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
+                    isHamburgerOpen ? 'translate-y-[3.5px] rotate-45' : ''
+                  } group-hover:opacity-75`}
+                />
+                <span
+                  className={`hamburger-line block w-[22px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
+                    isHamburgerOpen ? '-translate-y-[3.5px] -rotate-45' : ''
+                  } group-hover:opacity-75`}
+                />
+              </span>
+              <span className="font-mono text-[9px] font-bold tracking-[0.08em] hidden sm:inline">
+                {isExpanded ? 'CLOSE' : 'INDEX'}
+              </span>
+            </div>
+            <span className="font-mono text-[9px] text-ink-soft tracking-[0.08em] hidden lg:inline whitespace-nowrap">
+              NAV-01 · CHART DESK
+            </span>
+          </div>
+
+          <a
+            href="/"
+            aria-label={logoAlt}
+            className="logo-container no-underline flex items-center gap-2.5 md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none min-w-0"
           >
-            <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? 'translate-y-[4px] rotate-45' : ''
-              } group-hover:opacity-75`}
-            />
-            <div
-              className={`hamburger-line w-[30px] h-[2px] bg-current transition-[transform,opacity,margin] duration-300 ease-linear [transform-origin:50%_50%] ${
-                isHamburgerOpen ? '-translate-y-[4px] -rotate-45' : ''
-              } group-hover:opacity-75`}
-            />
-          </div>
-
-          <div className="logo-container flex items-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logo} alt={logoAlt} className="logo h-[28px]" />
-          </div>
+            <img src={logo} alt={logoAlt} className="logo h-[34px] w-[34px] object-contain shrink-0" />
+            <span className="flex flex-col leading-none min-w-0">
+              <span className="flex items-baseline gap-1 whitespace-nowrap">
+                <span className="font-display font-black text-[19px] tracking-tight text-ink">
+                  SlickTrace
+                </span>
+                <span className="font-display font-bold text-[19px] tracking-tight text-[#2E8B8F]">
+                  AI
+                </span>
+              </span>
+              <span className="font-mono text-[7.5px] text-ink-soft tracking-[0.22em] mt-[3px] hidden sm:inline whitespace-nowrap">
+                DETECT&nbsp;&nbsp;/&nbsp;&nbsp;TRACE&nbsp;&nbsp;/&nbsp;&nbsp;ATTRIBUTE
+              </span>
+            </span>
+          </a>
 
-          {ctaHref ? (
-            <a
-              href={ctaHref}
-              className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 items-center h-full font-medium cursor-pointer transition-opacity duration-300 hover:opacity-90 no-underline"
-              style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-            >
-              {ctaLabel}
-            </a>
-          ) : (
-            <button
-              type="button"
-              className="card-nav-cta-button hidden md:inline-flex border-0 rounded-[calc(0.75rem-0.2rem)] px-4 items-center h-full font-medium cursor-pointer transition-colors duration-300"
-              style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
-            >
-              {ctaLabel}
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden xl:flex items-center gap-1.5 font-mono text-[9px] text-ink-soft">
+              <span className="w-1.5 h-1.5 bg-safe inline-block" aria-hidden="true" />
+              SYSTEM NOMINAL
+            </span>
+            {ctaHref ? (
+              <a
+                href={ctaHref}
+                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-[2px] px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300 no-underline"
+                style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+                onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.6)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+              >
+                <span aria-hidden="true" className="mr-2 inline-block w-1.5 h-1.5 bg-current" />
+                {ctaLabel}
+              </a>
+            ) : (
+              <button
+                type="button"
+                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-[2px] px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300"
+                style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+              >
+                <span aria-hidden="true" className="mr-2 inline-block w-1.5 h-1.5 bg-current" />
+                {ctaLabel}
+              </button>
+            )}
+          </div>
         </div>
 
         <div
@@ -234,12 +276,15 @@ const CardNav: React.FC<CardNavProps> = ({
           {(items || []).slice(0, 3).map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}
-              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[calc(0.75rem-0.2rem)] min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%]"
+              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[2px] min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%] border border-ink/15"
               ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}
             >
-              <div className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px]">
-                {item.label}
+              <div className="flex items-center justify-between gap-2">
+                <div className="nav-card-label font-normal tracking-[-0.5px] text-[18px] md:text-[22px]">
+                  {item.label}
+                </div>
+                <span className="font-mono text-[9px] opacity-60">0{idx + 1}</span>
               </div>
               <div className="nav-card-links mt-auto flex flex-col gap-[2px]">
                 {item.links?.map((lnk, i) => (

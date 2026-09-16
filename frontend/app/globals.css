@@ -1,151 +1,191 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
+@import "./paper-dossier.css";
+@import "./landing-dossier.css";
 
-/* ─── Enterprise Typographic System ──────────────────────────────────────────
-   --font-display : Plus Jakarta Sans — Crisp, authoritative modern headings
-   --font-sans    : Inter             — Mission-grade UI chrome, navigation, body copy
-   --font-mono    : JetBrains Mono    — Telemetry, coordinates, MMSI, timestamps, scores
+/* ─── Chart & Casefile Design Tokens (Section 3 of design.md) ───────────────
+   Day chart: cool chart paper (#EDEEE6), rich ink (#13212B), chart magenta (#A6103F).
+   Typography: Roboto Slab (headings), Public Sans (body/UI), IBM Plex Mono (data).
+   Shapes: 2px radius maximum, 1px solid hairline borders (#C7CDC2).
    ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --background: #0a0f1a;
-  --foreground: #e2e8f0;
+  --paper: #EDEEE6;
+  --paper-alt: #E4E6DC;
+  --ink: #13212B;
+  --ink-soft: #51697A;
+  --hazard: #A6103F;
+  --safe: #1F4B3F;
+  --pending: #8A6D1F;
+  --grid: #C7CDC2;
+  --grid-strong: #9AA394;
+  --font-display: var(--font-display, "Roboto Slab", Georgia, serif);
+  --font-body: var(--font-body, "Public Sans", -apple-system, sans-serif);
+  --font-mono: var(--font-mono, "IBM Plex Mono", ui-monospace, monospace);
+  --radius: 2px;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
+[data-theme="dark"] {
+  --paper: #0E0C0A;
+  --ink: #D9A08C;
+  --ink-soft: #8A5F52;
+  --hazard: #C43A5C;
+  --safe: #3C6B57;
+  --grid: #2A211C;
+  --grid-strong: #45362E;
+  --paper-alt: #161310;
 }
 
-/* ─── Colour discipline ──────────────────────────────────────────────────────
-   One neutral ladder for every surface, ONE accent for action, and semantic
-   colours reserved strictly for data meaning (risk level, pass/fail, provenance).
-   Decorative colour is what makes an interface look generated; if a hue here is
-   not carrying information, it should not be on screen.
-
-     bg-ink-950   page          bg-ink-900   section     bg-ink-850  card
-     bg-ink-800   raised        border-line  hairline    border-line-strong  emphasis
-     text-fg      primary       text-fg-muted secondary  text-fg-dim  tertiary
-     text-accent  action only
-     risk-high / risk-med / risk-low / ok / info — data semantics only
-   ─────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ink-950: #080a0f;
-  --color-ink-900: #0d1017;
-  --color-ink-850: #12161f;
-  --color-ink-800: #181d28;
-  --color-ink-700: #1f2532;
+  --color-paper: var(--paper);
+  --color-paper-alt: var(--paper-alt);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-hazard: var(--hazard);
+  --color-safe: var(--safe);
+  --color-pending: var(--pending);
+  --color-grid: var(--grid);
+  --color-grid-strong: var(--grid-strong);
 
-  --color-line: #222834;
-  --color-line-strong: #2e3644;
+  /* Semantic backward-compat aliases mapped cleanly to the chart system */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-line: var(--grid);
+  --color-line-strong: var(--grid-strong);
+  --color-fg: var(--ink);
+  --color-fg-muted: var(--ink-soft);
+  --color-fg-dim: var(--ink-soft);
+  --color-accent: var(--ink);
+  --color-accent-hover: var(--ink-soft);
+  --color-accent-soft: var(--paper-alt);
+  --color-risk-high: var(--hazard);
+  --color-risk-med: var(--pending);
+  --color-risk-low: var(--ink-soft);
+  --color-ok: var(--safe);
+  --color-info: var(--ink-soft);
 
-  --color-fg: #e6e8ec;
-  --color-fg-muted: #98a0ae;
-  --color-fg-dim: #6b7280;
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
 
-  --color-accent: #f0b429;
-  --color-accent-hover: #f7c948;
-  --color-accent-soft: #2a2008;
-
-  --color-risk-high: #e5484d;
-  --color-risk-med: #f0b429;
-  --color-risk-low: #7d8590;
-  --color-ok: #3fb950;
-  --color-info: #4f8cc9;
+  --radius: 2px;
 }
 
 html,
 body {
   min-height: 100%;
   overflow-x: hidden;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body), "Public Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
 }
 
-/* ─── Executive Heading Hierarchy ─────────────────────────────────────────── */
-h1, h2, h3 {
-  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+h1, h2 {
+  font-family: var(--font-display), "Roboto Slab", Georgia, serif;
   font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
-h4, h5, h6 {
-  font-family: var(--font-sans), system-ui, sans-serif;
+h3 {
+  font-family: var(--font-body), "Public Sans", -apple-system, sans-serif;
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  font-size: 1.125rem;
+  line-height: 1.3;
 }
 
-/* ─── Global Type Utilities ──────────────────────────────────────────────── */
+/* Nautical chart millimeter grid background */
+.cartographic-grid {
+  background-color: var(--paper);
+  background-image: 
+    linear-gradient(to right, rgba(154, 163, 148, 0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(154, 163, 148, 0.22) 1px, transparent 1px),
+    linear-gradient(to right, rgba(154, 163, 148, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(154, 163, 148, 0.4) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+}
 
-/* Telemetry / data readout — coordinates, MMSI, timestamps, scores, AIS data */
+/* Four corner registration marks for technical panels */
+.crop-marks-4 {
+  position: relative;
+}
+.crop-marks-4::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid var(--ink);
+  border-left: 2px solid var(--ink);
+  pointer-events: none;
+  z-index: 10;
+}
+.crop-marks-4::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid var(--ink);
+  border-right: 2px solid var(--ink);
+  pointer-events: none;
+  z-index: 10;
+}
+
+
+/* Telemetry / data readout — strictly coordinates, timestamps, metrics */
 .font-mono,
 code,
 pre,
 [class*="font-mono"] {
-  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-family: var(--font-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace !important;
   font-feature-settings: "tnum" 1, "zero" 1;
-  letter-spacing: -0.01em;
 }
 
-/* High-legibility body / evidence / explanations */
-.font-body {
-  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
-}
-
-/* Display headings */
-.font-display {
-  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
-  letter-spacing: -0.025em;
-}
-
-
-/* Leaflet popup overrides for dark theme */
+/* Leaflet popup overrides for day chart theme */
 .leaflet-popup-content-wrapper {
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  background: var(--paper-alt);
+  color: var(--ink);
+  border: 1px solid var(--grid);
+  border-radius: 2px;
+  box-shadow: none;
   font-size: 11px;
 }
 
 .leaflet-popup-tip {
-  background: #1e293b;
+  background: var(--paper-alt);
 }
 
 .leaflet-popup-close-button {
-  color: #94a3b8 !important;
+  color: var(--ink-soft) !important;
 }
 
 .leaflet-tooltip {
-  background: #1e293b;
-  color: #cbd5e1;
-  border: 1px solid #334155;
-  border-radius: 4px;
+  background: var(--paper-alt);
+  color: var(--ink);
+  border: 1px solid var(--grid);
+  border-radius: 2px;
   font-size: 11px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: none;
 }
 
 .leaflet-tooltip-top::before {
-  border-top-color: #334155;
+  border-top-color: var(--grid);
 }
 
-/* Scrollbar styling */
+/* Minimal hairline scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -153,31 +193,9 @@ pre,
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--grid);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* ─── Moving Radar / Surveillance Sweep Animations ───────────────────────── */
-@keyframes radar-sweep {
-  0% {
-    transform: translateX(-100%);
-    opacity: 0.2;
-  }
-  30% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(300%);
-    opacity: 0.2;
-  }
-}
-
-.animate-radar-sweep {
-  animation: radar-sweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  background: var(--grid-strong);
 }

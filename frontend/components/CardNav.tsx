@@ -170,7 +170,7 @@ const CardNav: React.FC<CardNavProps> = ({
     >
       <nav
         ref={navRef}
-        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-[2px] relative overflow-hidden will-change-[height] shadow-[0_14px_28px_-16px_rgba(19,33,43,0.35),0_2px_6px_-2px_rgba(19,33,43,0.18)]`}
+        className={`card-nav ${isExpanded ? 'open' : ''} block h-[60px] p-0 rounded-2xl relative overflow-hidden will-change-[height] shadow-[0_14px_28px_-16px_rgba(19,33,43,0.35),0_2px_6px_-2px_rgba(19,33,43,0.18)]`}
         style={{
           backgroundColor: baseColor,
           border: '1px solid var(--grid-strong)',
@@ -179,9 +179,8 @@ const CardNav: React.FC<CardNavProps> = ({
         }}
       >
         <div className="card-nav-top absolute inset-x-0 top-0 h-[60px] flex items-center justify-between gap-2 p-2 pl-2 pr-2 z-[2] border-b border-grid">
-          <div className="flex items-center gap-2 min-w-0">
             <div
-              className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''} group h-[42px] px-2.5 flex items-center gap-2 cursor-pointer border border-grid-strong bg-paper-alt hover:bg-paper rounded-[2px] transition-colors shrink-0`}
+              className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''} group h-[42px] w-[46px] flex items-center justify-center cursor-pointer border border-grid-strong bg-paper-alt hover:bg-paper rounded-xl transition-colors shrink-0`}
               onClick={toggleMenu}
               onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -207,14 +206,7 @@ const CardNav: React.FC<CardNavProps> = ({
                   } group-hover:opacity-75`}
                 />
               </span>
-              <span className="font-mono text-[9px] font-bold tracking-[0.08em] hidden sm:inline">
-                {isExpanded ? 'CLOSE' : 'INDEX'}
-              </span>
             </div>
-            <span className="font-mono text-[9px] text-ink-soft tracking-[0.08em] hidden lg:inline whitespace-nowrap">
-              NAV-01 · CHART DESK
-            </span>
-          </div>
 
           <a
             href="/"
@@ -246,7 +238,7 @@ const CardNav: React.FC<CardNavProps> = ({
             {ctaHref ? (
               <a
                 href={ctaHref}
-                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-[2px] px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300 no-underline"
+                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-xl px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300 no-underline"
                 style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
                 onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.6)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
@@ -257,7 +249,7 @@ const CardNav: React.FC<CardNavProps> = ({
             ) : (
               <button
                 type="button"
-                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-[2px] px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300"
+                className="card-nav-cta-button hidden md:inline-flex border border-ink rounded-xl px-4 items-center h-[42px] font-mono text-xs font-bold tracking-wide cursor-pointer transition-colors duration-300"
                 style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
               >
                 <span aria-hidden="true" className="mr-2 inline-block w-1.5 h-1.5 bg-current" />
@@ -276,7 +268,7 @@ const CardNav: React.FC<CardNavProps> = ({
           {(items || []).slice(0, 3).map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}
-              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-[2px] min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%] border border-ink/15"
+              className="nav-card select-none relative flex flex-col gap-2 p-[12px_16px] rounded-xl min-w-0 flex-[1_1_auto] h-auto min-h-[60px] md:h-full md:min-h-0 md:flex-[1_1_0%] border border-ink/15"
               ref={setCardRef(idx)}
               style={{ backgroundColor: item.bgColor, color: item.textColor }}
             >

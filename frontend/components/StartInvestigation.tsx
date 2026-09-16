@@ -913,7 +913,7 @@ export default function StartInvestigation() {
             {/* ── Right Column (5 cols): Pipeline Execution + Engine Telemetry ── */}
             <div className="lg:col-span-5 flex flex-col space-y-5">
               {/* Card C: AUTONOMOUS PIPELINE EXECUTION — primary dossier, bottom tear */}
-              <div className="dossier-sheet torn-bottom tape tilt-l dossier-reveal border-2 border-ink bg-paper p-4 rounded-[2px]">
+              <div className="dossier-sheet torn-bottom tape tilt-l dossier-reveal border-2 border-ink bg-paper p-4 rounded-[2px] torn-guard torn-guard-b">
                 <span aria-hidden="true" className="tape-strip tc" />
                 <div className="flex items-center justify-between pb-2 border-b border-grid">
                   <div>

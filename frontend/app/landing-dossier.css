@@ -132,6 +132,19 @@
   flex-shrink: 0;
 }
 
+/* ============ torn-mask edge guard (visual-only) ============
+   The torn-* SVG masks erode roughly 2.5% of the element's width per
+   side (plus turbulence displacement), so right/bottom-aligned content
+   on wide sheets gets clipped. Percentage padding tracks the erosion
+   at any width. Stacks with component p-* padding. */
+.torn-guard {
+  padding-left: max(1.25rem, 3.5%);
+  padding-right: max(1.5rem, 4.5%);
+}
+.torn-guard-b {
+  padding-bottom: max(1.5rem, 5%);
+}
+
 @media (max-width: 1024px) {
   .evidence-card::after { opacity: 0.35; }
 }

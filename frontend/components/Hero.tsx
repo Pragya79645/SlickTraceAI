@@ -222,7 +222,7 @@ function HeroVisualization() {
       <span aria-hidden="true" className="tape-strip tl" />
       <span aria-hidden="true" className="tape-strip tr" />
       <span aria-hidden="true" className="fold" />
-      <div className="flex items-center justify-between px-4 py-2 border-b border-grid bg-paper-alt/70">
+      <div className="flex items-center justify-between px-[4%] py-2 border-b border-grid bg-paper-alt/70">
         <span className="doc-label">
           <b>Scene S1A-142</b> Sentinel-1 · VV band · 10 m GRD
         </span>
@@ -270,23 +270,23 @@ function HeroVisualization() {
           <circle cx="420" cy="70" r="11" fill="none" stroke="#A6103F" strokeWidth="1.2" />
           <circle cx="175" cy="232" r="4" fill="#13212B" />
           <g fontFamily="monospace" fontSize="10" fill="#51697A">
-            <text x="16" y="26">19.07N · 72.96E</text>
+            <text x="28" y="26">19.07N · 72.96E</text>
             <text x="398" y="326">T-06:00 ORIGIN</text>
-            <text x="16" y="326">T+00:00 SCENE</text>
+            <text x="28" y="326">T+00:00 SCENE</text>
           </g>
           <g fontFamily="monospace" fontSize="10" fill="#13212B">
             <text x="348" y="52">DISCHARGE WINDOW</text>
           </g>
         </svg>
         {/* floating technical chips */}
-        <div className="absolute left-3 top-10 sm:left-4 px-2 py-1 bg-paper border border-grid font-mono text-[9px] text-ink shadow-sm rounded-[1px]">
+        <div className="absolute left-5 top-10 sm:left-6 px-2 py-1 bg-paper border border-grid font-mono text-[9px] text-ink shadow-sm rounded-[1px]">
           SEGMENTED MASK <b>0.82</b>
         </div>
-        <div className="absolute right-3 bottom-10 sm:right-4 px-2 py-1 bg-ink text-paper font-mono text-[9px] shadow-sm rounded-[1px]">
+        <div className="absolute right-5 bottom-10 sm:right-6 px-2 py-1 bg-ink text-paper font-mono text-[9px] shadow-sm rounded-[1px]">
           ORIGIN BAND <b>95%</b>
         </div>
       </div>
-      <div className="grid grid-cols-3 divide-x divide-grid border-t border-grid bg-paper-alt/70 font-mono text-[9px] text-ink-soft">
+      <div className="grid grid-cols-3 divide-x divide-grid border-t border-grid bg-paper-alt/70 font-mono text-[9px] text-ink-soft px-[4%] pb-4">
         <div className="px-3 py-2"><span className="block">Detect</span><b className="text-ink text-[10px]">Slick polygon</b></div>
         <div className="px-3 py-2"><span className="block">Trace back</span><b className="text-ink text-[10px]">−6 h hindcast</b></div>
         <div className="px-3 py-2"><span className="block">Attribute</span><b className="text-ink text-[10px]">Ranked suspect</b></div>

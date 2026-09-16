@@ -79,7 +79,7 @@ export default function PipelineHUD({
 
   return (
     <div
-      className={`dossier-sheet dossier-archival torn-b border border-grid bg-paper-alt text-ink rounded-[2px] overflow-hidden ${className}`}
+      className={`border border-grid bg-paper-alt text-ink rounded-[2px] overflow-hidden ${className}`}
       role="log"
       aria-live="polite"
       aria-label="Pipeline logbook"

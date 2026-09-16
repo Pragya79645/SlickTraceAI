@@ -258,7 +258,7 @@ export default function InvestigationStoryMode({
 
         {/* ── Right Side: Dedicated Stage Story Card (5 cols) ─────────────────── */}
         <div className="lg:col-span-5 flex flex-col justify-between">
-          <div className="dossier-sheet torn-a rounded-[2px] border border-grid bg-paper p-6 space-y-5 flex-1 flex flex-col justify-between">
+          <div className="rounded-[2px] border border-grid bg-paper p-6 space-y-5 flex-1 flex flex-col justify-between">
             {/* ── STAGE 1: DETECT UNKNOWN SLICK ──────────────────────────────── */}
             {currentStage === 1 && (
               <div className="space-y-4 animate-in fade-in duration-300">
@@ -947,7 +947,7 @@ export default function InvestigationStoryMode({
       {/* ── "HOW DID WE GET HERE?" Modal / Drawer ────────────────────────────── */}
       {showHowWeGotHere && (
         <div className="fixed inset-0 z-[9999] bg-ink/45 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in">
-          <div className="dossier-sheet bg-paper border border-grid rounded-[2px] max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto relative z-[10000]">
+          <div className="bg-paper border border-grid rounded-[2px] max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto relative z-[10000]">
             <div className="flex items-center justify-between border-b border-grid pb-3">
               <div className="flex items-center gap-2">
                 <Search size={16} strokeWidth={2} className="text-ink" />

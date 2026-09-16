@@ -79,8 +79,7 @@ export default function ModelMetricsPanel({ compact = false }: { compact?: boole
   const recall = metrics?.mask_recall != null ? pct(metrics.mask_recall) : "55.8%";
 
   return (
-    <div className="dossier-sheet dossier-cool torn-d tape tilt-slight-l dossier-reveal border border-grid-strong bg-paper-alt/80 p-3 rounded-[2px] text-xs">
-      <span aria-hidden="true" className="tape-strip tl" />
+    <div className="border border-grid bg-paper-alt/80 p-3 rounded-[2px] text-xs">
       {/* Panel header */}
       <div className="flex items-center justify-between font-mono text-[10px] text-ink font-bold pb-2 mb-2 border-b border-grid">
         <span className="tracking-wider">INFERENCE ENGINE TELEMETRY &amp; CONFIDENCE PROFILE</span>

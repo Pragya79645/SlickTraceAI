@@ -415,8 +415,7 @@ export default function Landing() {
         <section className="border-t border-grid">
           <div className="max-w-5xl mx-auto px-6 py-20 sm:py-24">
             <Reveal>
-              <div className="dossier-sheet torn-bottom tape p-6 sm:p-12 text-center overflow-visible">
-                <span aria-hidden="true" className="tape-strip tc" />
+              <div className="max-w-3xl mx-auto text-center">
                 <p className="doc-label justify-center"><b>Final sheet</b> Open a case</p>
                 <h2 className="mt-4 text-3xl sm:text-4xl font-display font-black tracking-tight text-ink">
                   Bring a scene. Get a suspect.

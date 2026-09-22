@@ -259,15 +259,12 @@ export default function StartInvestigation() {
     try {
       const res = await runAISCorrelation({
         spill_id: analysisResult.spill_id,
-        estimated_origin: driftResult.hindcast.estimated_origin,
-        discharge_window: {
-          start_time: new Date(
-            new Date(driftResult.hindcast.estimated_origin.timestamp).getTime() - 2 * 3600 * 1000
-          ).toISOString(),
-          end_time: new Date(
-            new Date(driftResult.hindcast.estimated_origin.timestamp).getTime() + 2 * 3600 * 1000
-          ).toISOString(),
+        origin: {
+          latitude: driftResult.hindcast.estimated_origin.lat,
+          longitude: driftResult.hindcast.estimated_origin.lon,
+          timestamp: driftResult.hindcast.estimated_origin.timestamp,
         },
+        origin_ellipses: driftResult.ensemble?.hindcast_steps.at(-1)?.ellipses,
       });
       setAisResult(res);
       if (res.candidate_vessels.length > 0) {

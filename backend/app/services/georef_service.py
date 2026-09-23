@@ -20,6 +20,7 @@ Plain PNG/JPEG uploads have no georeference; the caller falls back to manual anc
 from __future__ import annotations
 
 import math
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -36,7 +37,11 @@ try:
 except ImportError:  # keep the API importable without rasterio; GeoTIFF uploads then fail cleanly
     HAVE_RASTERIO = False
 
-MAX_INFERENCE_SIDE = 2048      # longest side of the array handed to the model
+# Longest side of the array handed to the model. Tile count (and so both memory and
+# wall-clock) scales with the square of this, since decimating to half the side length
+# gives roughly a quarter of the tiles. 2048 keeps a real Sentinel-1 GRD scene sharp;
+# override with SLICKTRACE_MAX_INFERENCE_SIDE on a memory-constrained host.
+MAX_INFERENCE_SIDE = int(os.environ.get("SLICKTRACE_MAX_INFERENCE_SIDE", "2048"))
 STRETCH_PERCENTILES = (2.0, 98.0)
 METERS_PER_DEG_LAT = 111195.0
 LEE_WINDOW = 7                 # speckle-filter window (SNAP-style Lee filter) for single-band SAR

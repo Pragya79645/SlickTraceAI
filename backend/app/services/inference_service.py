@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import json
 import math
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -54,7 +55,11 @@ TILE_SIZE = 256                   # = training crop size, so a slick fills a til
 TILE_OVERLAP = 64
 SINGLE_PASS_MAX_SIDE = 512        # frames up to this size are inferred in one pass
 MIN_MASK_AREA_PX = 40             # drop merged fragments smaller than this
-TILE_BATCH = 16
+# Tiles per model.predict() call. Peak memory during tiled inference scales with this,
+# not with scene size — a large scene just means more batches, not a bigger one. Kept
+# small by default so the service fits Render's free-tier 512 MB ceiling; override with
+# SLICKTRACE_TILE_BATCH on a host with more headroom.
+TILE_BATCH = int(os.environ.get("SLICKTRACE_TILE_BATCH", "4"))
 TILE_CONF_FLOOR = 0.30            # whole-scene tiles see far more open water: raise the bar
 MAX_TILE_FILL = 0.85              # a mask covering ≥ this fraction of its tile is "the tile", not a slick
 # Physical gate for whole scenes: oil damps capillary waves, so a real slick is darker
@@ -88,6 +93,18 @@ def get_yolo_model() -> YOLO:
     if _MODEL_INSTANCE is None:
         if not MODEL_PATH.exists():
             raise FileNotFoundError(f"Trained YOLO model not found at: {MODEL_PATH}")
+
+        # Cap CPU thread pools before the first forward pass allocates them. On a
+        # constrained, shared-vCPU host (Render free tier) each BLAS/OpenMP thread
+        # carries its own buffers; multi-threading a single-request service buys
+        # little speed but measurably more peak memory. Safe to leave unset locally.
+        try:
+            import torch
+            torch.set_num_threads(int(os.environ.get("SLICKTRACE_TORCH_THREADS", "1")))
+        except Exception:
+            pass
+        cv2.setNumThreads(int(os.environ.get("SLICKTRACE_CV2_THREADS", "1")))
+
         _MODEL_INSTANCE = YOLO(str(MODEL_PATH))
     return _MODEL_INSTANCE
 

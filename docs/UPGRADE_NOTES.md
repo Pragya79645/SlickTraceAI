@@ -64,7 +64,7 @@ whole-tile masks, and applies a physical **≥ 2 dB backscatter-damping gate** m
 true radiometry. Previews show the true radiometry; the model never sees it.
 
 On the bundled synthetic Sentinel-1-style scene
-(`data/demo/S1A_IW_GRDH_1SDV_20260828T210213_MUMBAI_SYNTHETIC.tif`) this recovers the
+(`data/demo/Validation_Scene_KnownSlick.tif`) this recovers the
 planted 6 km × 1.2 km slick at 0.87 confidence with the centroid within ~250 m, and zero
 false positives. **It has not yet been run on a real Sentinel-1 scene** — that is the single
 most valuable remaining step. Get one from the Copernicus Browser over Indian waters (the

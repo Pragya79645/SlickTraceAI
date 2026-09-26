@@ -63,7 +63,7 @@ which version of it matters.*
 
 ### 01 · Establish that this is real ESA data — `~40s`
 
-**DO:** Open `/investigate`, drop in **`S1A_RTC_MUMBAI_OFFSHORE_VV.tif`**, click **ANALYZE SCENE**.
+**DO:** Open `/investigate`, drop in **`Sentinel1_Mumbai_Offshore_19Feb2026.tif`**, click **ANALYZE SCENE**.
 
 > "Before anything else — this is an actual Copernicus Sentinel-1 scene, acquired over the
 > Mumbai approaches on the 19th of February. Terrain-corrected ESA data, not a picture we made."
@@ -328,7 +328,7 @@ where the interface shows it rather than guessing.
 
 `S1A_IW_GRDH_1SDV_20260219T010312` — Copernicus Sentinel-1A, RTC (terrain-corrected),
 UTM zone 43N, 10 m/px, sourced via Microsoft Planetary Computer. Local file:
-`backend/data/demo/S1A_RTC_MUMBAI_OFFSHORE_VV.tif` (53 MB window of a 1.84 GB product).
+`backend/data/demo/Sentinel1_Mumbai_Offshore_19Feb2026.tif` (53 MB window of a 1.84 GB product).
 
 ---
 

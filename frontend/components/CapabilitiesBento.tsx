@@ -31,7 +31,7 @@ export default function CapabilitiesBento() {
 
       <div className="mt-8 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <h2 className="text-3xl sm:text-4xl font-display font-black tracking-tight text-ink max-w-2xl leading-tight">
-          Built to survive an expert&apos;s questions
+          Defensible science, not just computer vision
         </h2>
         <span className="inline-flex items-center gap-2 border border-grid px-3 py-1 font-mono text-[11px] text-ink rounded-xs self-start lg:self-auto bg-paper">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
